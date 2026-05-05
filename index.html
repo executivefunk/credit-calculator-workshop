@@ -28,6 +28,10 @@ html, body {
 }
 h2 { text-align: center; }
 label { display: block; margin-top: 15px; }
+/* Hide number input spinner arrows */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+input[type="number"]{-moz-appearance:textfield;}
 input[type="number"],
 select {
   width: 100%;
@@ -118,15 +122,57 @@ select {
 .top-actions button.btn-pdf:hover { background: #1b5e20; }
 .top-actions button.btn-share { background: #1565c0; color: #fff; border-color: #1565c0; }
 .top-actions button.btn-share:hover { background: #0d47a1; }
-@media print {
-  .top-actions { display: none; }
-  body { background: white !important; margin: 0; padding: 0; }
-  .container { max-width: 100% !important; box-shadow: none !important; border-radius: 0 !important; padding: 20px !important; }
-  .print-page-1 { page-break-after: always; }
-  #langToggleBtn, #languagePrompt, .year-toggle { display: none !important; }
-  table, tr, td, th { page-break-inside: avoid !important; break-inside: avoid !important; }
-  .force-page-break { page-break-before: always !important; }
-}
+/* GRADUATION PLANNER */
+.grad-planner{background:#f0f4ff;border:2px solid #b0c4de;border-radius:10px;margin-bottom:18px;overflow:hidden;}
+.gp-header{display:flex;justify-content:center;align-items:center;padding:12px 16px;cursor:pointer;background:#e8f0fe;user-select:none;position:relative;}
+.gp-header:hover{background:#dce8fc;}
+.gp-header-title{font-weight:bold;font-size:1.05em;color:#1a3a6b;word-wrap:break-word;overflow-wrap:break-word;}
+.gp-header-arrow{position:absolute;right:16px;}
+.gp-header-arrow{color:#4a90d9;font-size:1.1em;transition:transform 0.25s;}
+.gp-body{padding:14px 16px 16px;}
+.gp-inputs{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+.gp-inputs>div{flex:1;min-width:140px;}
+.gp-inputs label{font-size:0.9em;display:block;margin-bottom:4px;color:#333;}
+.gp-inputs select,.gp-inputs input{width:100%;padding:8px;border-radius:6px;border:1px solid #b0c4de;box-sizing:border-box;font-size:0.95em;}
+.gp-result{margin-top:14px;word-wrap:break-word;overflow-wrap:break-word;}
+.gp-header-bar{background:#dce8fc;border:1px solid #b0c4de;border-radius:8px;padding:10px 14px;margin-bottom:10px;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;font-size:0.9em;}
+.gp-header-bar strong{color:#1a3a6b;}
+.gp-header-bar span{word-wrap:break-word;overflow-wrap:break-word;}
+.gp-year-row{border-radius:8px;padding:11px 14px;margin-bottom:8px;border:1px solid #ddd;background:#fafafa;word-wrap:break-word;overflow-wrap:break-word;}
+.gp-year-row.gp-current{background:#fffde7;border:2px solid #f9a825;}
+.gp-year-row.gp-past{background:#f5f5f5;opacity:0.75;}
+.gp-year-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.gp-year-left{flex:1;min-width:0;}
+.gp-year-label{font-weight:bold;font-size:1em;word-wrap:break-word;overflow-wrap:break-word;}
+.gp-year-sub{font-size:0.85em;color:#666;margin-top:2px;word-wrap:break-word;overflow-wrap:break-word;}
+.gp-year-credits{text-align:right;flex-shrink:0;}
+.gp-year-credits strong{font-size:1em;}
+.gp-running-total{font-size:0.82em;color:#1a5fa5;font-weight:600;margin-top:1px;}
+.gp-pace{font-size:0.88em;margin-top:2px;}
+.gp-pace-green{color:#2e7d32;}
+.gp-pace-yellow{color:#b8860b;}
+.gp-pace-orange{color:#e65100;}
+.gp-pace-red{color:#c62828;font-weight:bold;}
+.gp-use-btn{margin-top:9px;width:100%;padding:9px 12px;background:#4a90d9;color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.88em;font-weight:bold;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;line-height:1.3;}
+.gp-use-btn:hover{background:#3a7bc8;}
+.gp-intervention{background:#fff8e1;border:1px solid #ffcc02;border-radius:8px;padding:12px 14px;margin-top:8px;}
+.gp-intervention h4{margin:0 0 8px;font-size:0.95em;color:#7b5800;}
+.gp-int-card{border-radius:6px;padding:9px 12px;margin-top:7px;font-size:0.88em;word-wrap:break-word;overflow-wrap:break-word;}
+.gp-int-gya{background:#fdecea;border:1px solid #e57373;}
+.gp-int-de{background:#e3f2fd;border:1px solid #90caf9;}
+.gp-int-card strong{display:block;margin-bottom:3px;}
+.gp-year-row.gp-grad-year{background:#e8f5e9;border:2px solid #81c784;}
+.gp-section-label{font-size:0.93em;font-weight:bold;color:#fff;margin:0 0 10px;padding:8px 12px;background:#1a3a6b;border-radius:6px;border-left:none;word-wrap:break-word;overflow-wrap:break-word;line-height:1.4;text-align:center;}
+.gp-section-label span{color:#ffcdd2;}
+.gp-scenario-divider{border:none;border-top:2px dashed #b0c4de;margin:16px 0;}
+.gp-plan-section{border-radius:10px;padding:12px 12px 6px;margin-bottom:14px;overflow:hidden;}
+.gp-plan-traditional{border:2px solid #1a3a6b;background:#f8faff;}
+.gp-plan-extended{border:2px solid #4a6fa5;background:#f0f4fb;}
+.gp-plan-traditional .gp-section-label{background:#1a3a6b;}
+.gp-plan-extended .gp-section-label{background:#3a5a8a;}
+.gp-bm-hit{color:#2e7d32;font-size:0.85em;}
+.gp-bm-miss{color:#c62828;font-size:0.85em;}
+@media(max-width:768px){.gp-inputs{flex-direction:column;}.gp-inputs>div{min-width:unset;}.gp-header-bar{flex-direction:column;gap:4px;}}
 
 /* =====================================================
    WORKSHOP ACCESS SYSTEM STYLES
@@ -377,6 +423,30 @@ select {
 <div class="container">
   <div style="text-align: center; margin-bottom: 10px;">
     <button id="langToggleBtn" onclick="showLanguagePrompt()">Espa&ntilde;ol</button>
+  </div>
+
+  <!-- GRADUATION CREDIT PLANNER -->
+  <div class="grad-planner" id="gradPlanner">
+    <div class="gp-header" onclick="toggleGradPlanner()">
+      <span class="gp-header-title">🎓 Graduation Credit Planner</span>
+      <span class="gp-header-arrow" id="gpArrow">▼</span>
+    </div>
+    <div class="gp-body" id="gpBody" style="display:none;">
+      <p id="gpDescription" style="font-size:0.88em;color:#555;margin:0 0 12px;">Enter your freshman start year and credits remaining to see your year-by-year plan toward graduation (230 credits total).</p>
+      <div class="gp-inputs">
+        <div>
+          <label for="gpFreshmanYear">I started 9th grade in:</label>
+          <select id="gpFreshmanYear" onchange="calcGradPlan()">
+            <option value="">-- Select --</option>
+          </select>
+        </div>
+        <div>
+          <label for="gpCreditsRemaining">Credits I still have remaining:</label>
+          <input type="number" id="gpCreditsRemaining" min="1" max="229" placeholder="" oninput="calcGradPlan()">
+        </div>
+      </div>
+      <div class="gp-result" id="gpResult"></div>
+    </div>
   </div>
 
   <!-- Year Toggle -->
@@ -1263,6 +1333,11 @@ const translations = {
   "When does this program take place?": "\u00bfCu\u00e1ndo toma lugar este programa?",
   "How many high school credits will you earn from this program?": "\u00bfCu\u00e1ntos cr\u00e9ditos de preparatoria ganar\u00e1s con este programa?",
   "+ Add a second outside program": "+ Agregar un segundo programa externo",
+  "\ud83c\udf93 Graduation Credit Planner":"\ud83c\udf93 Planificador de Cr\u00e9ditos de Graduaci\u00f3n",
+  "I started 9th grade in:":"Empec\u00e9 el 9\u00b0 grado en:",
+  "Credits I still have remaining:":"Cr\u00e9ditos que a\u00fan me quedan:",
+  "gpDescriptionEN":"Enter your freshman start year and credits remaining to see your year-by-year plan toward graduation (230 credits total).",
+  "gpDescriptionES":"Ingresa tu a\u00f1o de inicio de 9\u00b0 grado y tus cr\u00e9ditos restantes para ver tu plan a\u00f1o por a\u00f1o hacia la graduaci\u00f3n (230 cr\u00e9ditos en total).",
 };
 
 // =====================================================
@@ -3296,6 +3371,11 @@ function applyTranslations() {
   displayCurrentDateAndWeek();
   updateYearToggle();
   renderResult();
+  // Update Graduation Planner description and recalculate
+  const gpDesc = document.getElementById('gpDescription');
+  if (gpDesc) gpDesc.textContent = isSpanish ? translations.gpDescriptionES : translations.gpDescriptionEN;
+  populateGpFreshmanDropdown();
+  calcGradPlan();
 }
 
 function formatEmailDate() {
@@ -3415,9 +3495,521 @@ function toggleLanguage() {
 }
 
 // =====================================================
+// GRADUATION CREDIT PLANNER
+// =====================================================
+function toggleGradPlanner(){
+  const body=document.getElementById('gpBody');
+  const arrow=document.getElementById('gpArrow');
+  if(!body||!arrow)return;
+  const isOpen=body.style.display!=='none';
+  body.style.display=isOpen?'none':'block';
+  arrow.textContent=isOpen?'▼':'▲';
+}
+function populateGpFreshmanDropdown(){
+  const sel=document.getElementById('gpFreshmanYear');
+  if(!sel)return;
+  const currentSY=getCurrentSchoolYear();
+  const prev=sel.value;
+  sel.innerHTML='<option value="">-- '+(isSpanish?'Seleccionar':'Select')+' --</option>';
+  for(let y=currentSY-3;y<=currentSY+1;y++){
+    const opt=document.createElement('option');
+    opt.value=y;
+    opt.textContent=y+'–'+(y+1);
+    sel.appendChild(opt);
+  }
+  if(prev)sel.value=prev;
+}
+function gpGetCurrentWeek(){
+  const currentSY=getCurrentSchoolYear();
+  const syData=generateSchoolYear(currentSY);
+  const today=new Date();
+  const yearStart=new Date(currentSY,6,1);
+  const yearEnd=new Date(currentSY+1,5,30);
+  if(today<yearStart)return{week:1,syData,currentSY,skippedWeek:false};
+  if(today>yearEnd)return{week:syData.totalWeeks,syData,currentSY,skippedWeek:false};
+  let w=1;
+  for(let i=syData.isoStarts.length-1;i>0;i--){
+    const pts=syData.isoStarts[i].split('-').map(Number);
+    if(today>=new Date(pts[0],pts[1]-1,pts[2])){w=i;break;}
+  }
+  // If today is not Monday, skip the partial current week — plan starts next Monday
+  const isMonday=today.getDay()===1;
+  const planWeek=isMonday?w:Math.min(w+1,syData.totalWeeks);
+  return{week:planWeek,syData,currentSY,skippedWeek:!isMonday};
+}
+// Build period list from current position through graduation school year
+// Non-graduation years use all weeks; graduation year uses Week 46
+function gpBuildPeriods(freshmanYear,gradSY,currentSY,currentWeek,currentSyData,skippedWeek){
+  const periods=[];
+  for(let sy=currentSY;sy<=gradSY;sy++){
+    const hsYr=sy-freshmanYear+1;
+    const isGrad=sy===gradSY;
+    const isCur=sy===currentSY;
+    let weeks;
+    let week1Skipped=false;
+    if(isCur){
+      const endW=isGrad?46:currentSyData.totalWeeks;
+      weeks=Math.max(1,endW-currentWeek+1);
+    } else {
+      const futureSyData=generateSchoolYear(sy);
+      week1Skipped=futureSyData.week1Partial;
+      const baseW=isGrad?46:futureSyData.totalWeeks;
+      weeks=Math.max(1,baseW-(week1Skipped?1:0));
+    }
+    periods.push({sy,hsYr,yearLabel:sy+'–'+(sy+1),weeks,isGrad,isCur,
+      skippedWeek:isCur&&!!skippedWeek,week1Skipped,isGyaSlot:false,isPostGya:false,
+      credits:0,pace:0,cumEnd:0,bmTarget:0});
+  }
+  return periods;
+}
+// Build period list for GYA scenario:
+// Inserts a GYA semester slot at the next available July cohort, splitting that year into
+// Semester 1 (GYA, weeks 1–30) and Semester 2 (post-GYA, weeks 31–end)
+function gpBuildGyaPeriods(freshmanYear,gradSY,currentSY,currentWeek,currentSyData,skippedWeek,gyaCredits,gyaCohorts){
+  const GYA_WEEKS=30; // Semester 1 ends at Week 30
+  const periods=[];
+  // Find next July cohort to anchor the GYA slot
+  const julyCohort=gyaCohorts.find(c=>c.label.indexOf('July')>=0||c.label.indexOf('Julio')>=0);
+  const gyaSY=julyCohort?julyCohort.sy:Math.max(currentSY+1,freshmanYear+2);
+  for(let sy=currentSY;sy<=gradSY;sy++){
+    const hsYr=sy-freshmanYear+1;
+    const isGrad=sy===gradSY;
+    const isCur=sy===currentSY;
+    if(sy<gyaSY){
+      // Regular year before GYA
+      let weeks,week1Skipped=false;
+      if(isCur){
+        const endW=isGrad?46:currentSyData.totalWeeks;
+        weeks=Math.max(1,endW-currentWeek+1);
+      } else {
+        const fsd=generateSchoolYear(sy);
+        week1Skipped=fsd.week1Partial;
+        const baseW=isGrad?46:fsd.totalWeeks;
+        weeks=Math.max(1,baseW-(week1Skipped?1:0));
+      }
+      periods.push({sy,hsYr,yearLabel:sy+'–'+(sy+1),weeks,isGrad,isCur,
+        skippedWeek:isCur&&!!skippedWeek,week1Skipped,isGyaSlot:false,isPostGya:false,
+        credits:0,pace:0,cumEnd:0,bmTarget:0});
+    } else if(sy===gyaSY){
+      // Split this year: GYA = Semester 1 (Wks 1–30), student = Semester 2 (Wks 31–end)
+      const gyaSyd=generateSchoolYear(sy);
+      const baseW=isGrad?46:gyaSyd.totalWeeks;
+      const adjW=Math.max(1,baseW-(gyaSyd.week1Partial?1:0));
+      const postWeeks=Math.max(0,adjW-GYA_WEEKS);
+      const gyaEndWk=GYA_WEEKS; // always Week 30
+      // GYA slot — GYA_WEEKS planning weeks (Semester 1)
+      periods.push({sy,hsYr,yearLabel:sy+'–'+(sy+1),weeks:GYA_WEEKS,gyaEndWk,
+        isGrad:false,isCur:false,skippedWeek:false,week1Skipped:false,
+        isGyaSlot:true,isPostGya:false,
+        credits:gyaCredits,pace:gyaCredits/GYA_WEEKS,cumEnd:0,bmTarget:0});
+      // Post-GYA student semester (Semester 2, starts Week 31)
+      if(postWeeks>0){
+        const postEndWk=GYA_WEEKS+postWeeks; // e.g. 30+21=51 or 30+22=52
+        periods.push({sy,hsYr,yearLabel:sy+'–'+(sy+1),weeks:postWeeks,postEndWk,
+          isGrad,isCur:false,skippedWeek:false,week1Skipped:false,
+          isGyaSlot:false,isPostGya:true,
+          credits:0,pace:0,cumEnd:0,bmTarget:0});
+      }
+    } else {
+      // Regular year after GYA year
+      const fsd=generateSchoolYear(sy);
+      const week1Skipped=fsd.week1Partial;
+      const baseW=isGrad?46:fsd.totalWeeks;
+      const weeks=Math.max(1,baseW-(week1Skipped?1:0));
+      periods.push({sy,hsYr,yearLabel:sy+'–'+(sy+1),weeks,isGrad,isCur:false,
+        skippedWeek:false,week1Skipped,isGyaSlot:false,isPostGya:false,
+        credits:0,pace:0,cumEnd:0,bmTarget:0});
+    }
+  }
+  return periods;
+}
+// Front-load: fill each year to hit its benchmark ASAP, capped at MAX_PACE cr/week
+// Credits that can't fit at the pace cap carry over to the next year automatically
+// Benchmarks (cumulative): Year1→60, Year2→120, Year3→180, Year4+→230
+function gpFrontLoad(periods,credEarned,credRemaining){
+  const BM=[0,60,120,180,230];
+  const MAX_PACE=2; // realistic maximum sustainable pace
+  let cum=credEarned,rem=credRemaining;
+  for(const p of periods){
+    const bm=BM[Math.min(p.hsYr,4)];
+    p.bmTarget=bm;
+    if(rem<=0){p.credits=0;}
+    else{
+      const need=Math.max(0,bm-cum);
+      const maxPossible=p.weeks*MAX_PACE;
+      p.credits=Math.min(need,rem,maxPossible);
+    }
+    rem-=p.credits;
+    cum+=p.credits;
+    p.cumEnd=cum;
+    p.pace=p.weeks>0?p.credits/p.weeks:0;
+  }
+  return rem; // leftover > 0 means credits won't fit in the given years
+}
+// Front-load for GYA scenario: GYA slot credits are pre-assigned externally;
+// student earns the rest at pace cap — running totals include GYA credits
+function gpFrontLoadGya(periods,credEarned,credRemaining){
+  const BM=[0,60,120,180,230];
+  const MAX_PACE=2;
+  let cum=credEarned,rem=credRemaining;
+  for(const p of periods){
+    p.bmTarget=BM[Math.min(p.hsYr,4)];
+    if(p.isGyaSlot){
+      // GYA credits automatically credited — not drawn from student's remaining pool
+      cum+=p.credits;
+      p.cumEnd=cum;
+    } else {
+      if(rem<=0){p.credits=0;}
+      else{
+        const need=Math.max(0,p.bmTarget-cum);
+        const maxPossible=p.weeks*MAX_PACE;
+        p.credits=Math.min(need,rem,maxPossible);
+      }
+      rem-=p.credits;
+      cum+=p.credits;
+      p.cumEnd=cum;
+      p.pace=p.weeks>0?p.credits/p.weeks:0;
+    }
+  }
+  return rem;
+}
+// Even distribution (lightest uniform load — used for extended year scenario)
+function gpEvenLoad(periods,credEarned,credRemaining){
+  const BM=[0,60,120,180,230];
+  const totalWks=periods.reduce((s,p)=>s+p.weeks,0);
+  if(totalWks<=0)return;
+  let cum=credEarned,rem=credRemaining;
+  for(let i=0;i<periods.length;i++){
+    const p=periods[i];
+    p.bmTarget=BM[Math.min(p.hsYr,4)];
+    const raw=Math.round(credRemaining*(p.weeks/totalWks));
+    const assign=i<periods.length-1?Math.min(raw,rem):rem;
+    p.credits=Math.max(0,assign);
+    rem-=p.credits;
+    cum+=p.credits;
+    p.cumEnd=cum;
+    p.pace=p.weeks>0?p.credits/p.weeks:0;
+  }
+}
+// Render year rows into HTML
+// showUseBtn: show single-year button on current row + combined (Year N + Year N+1) button after row N+1
+// combinedCredits: if > 0, insert a combined button after the first non-current period
+// calcConfig: { startWk, curEndWk, nextEndWk } — auto-configures calculator when buttons are clicked
+function gpRenderRows(periods,showUseBtn,combinedCredits,calcConfig){
+  const cfg=calcConfig||{};
+  const cfgSW=cfg.startWk||1;
+  const cfgEW=cfg.curEndWk||52;
+  const cfgNW=cfg.nextEndWk||46;
+  let html='';
+  let combinedDone=false;
+  const curP=periods.find(pp=>pp.isCur);
+  periods.forEach(p=>{
+    // ── GYA slot: special standalone row (red) ─────────────────────
+    if(p.isGyaSlot){
+      const gyaWkLabel=isSpanish?'Semanas 1–30 (Semestre 1)':'Weeks 1–30 (Semester 1)';
+      html+='<div class="gp-year-row" style="background:#fdecea;border:2px solid #e57373;">'
+        +'<div class="gp-year-top">'
+          +'<div class="gp-year-left">'
+            +'<div class="gp-year-label">🏕️ '+(isSpanish?'Semestre GYA (Año '+p.hsYr+')':'GYA Semester (Year '+p.hsYr+')')+'</div>'
+            +'<div class="gp-year-sub">'+p.yearLabel+' · '+gyaWkLabel+'</div>'
+          +'</div>'
+          +'<div class="gp-year-credits">'
+            +'<strong style="color:#b71c1c;">+'+p.credits+' '+(isSpanish?'créditos GYA':'GYA credits')+'</strong>'
+            +'<div class="gp-running-total">'+(isSpanish?'Acumulado: ':'Running Total: ')+p.cumEnd+' / 230</div>'
+          +'</div>'
+        +'</div>'
+        +'<div style="margin-top:6px;font-size:0.85em;color:#b71c1c;">'
+          +'🏕️ '+(isSpanish?'Créditos otorgados al completar el programa GYA.':'Credits awarded upon completing the GYA program.')
+        +'</div>'
+      +'</div>';
+      return;
+    }
+    // ── Standard row ────────────────────────────────────────────────
+    const paceClass=p.pace<=2.0?'gp-pace-green':p.pace<=2.5?'gp-pace-yellow':p.pace<=3.0?'gp-pace-orange':'gp-pace-red';
+    const paceIcon=p.pace<=2.0?'✅':p.pace<=2.5?'⚠️':p.pace<=3.0?'⚠️':'🚨';
+    let rowCls='gp-year-row';
+    if(p.isCur)rowCls+=' gp-current';
+    if(p.isGrad)rowCls+=' gp-grad-year';
+    const bmMet=p.cumEnd>=p.bmTarget;
+    const bmClass=bmMet?'gp-bm-hit':'gp-bm-miss';
+    const bmIcon=bmMet?'✅':'❌';
+    let yearName;
+    if(p.isCur){
+      yearName=isSpanish?'Año '+p.hsYr+' (Resto del año)':'Year '+p.hsYr+' (Remainder)';
+    } else if(p.isPostGya){
+      yearName=isSpanish?'Año '+p.hsYr+' (2do semestre, post-GYA)':'Year '+p.hsYr+' (2nd semester, post-GYA)';
+    } else if(p.isGrad){
+      yearName=isSpanish?'Año '+p.hsYr+' — Graduación':'Year '+p.hsYr+' — Graduation Year';
+    } else {
+      yearName=isSpanish?'Año '+p.hsYr+' (Año completo)':'Year '+p.hsYr+' (Full year)';
+    }
+    let wNote;
+    const wkStart=p.week1Skipped?2:1;
+    const wkEnd=p.weeks+(p.week1Skipped?1:0);
+    if(p.isCur){
+      wNote=p.skippedWeek
+        ?(isSpanish?'Plan inicia próxima semana · Semanas restantes: '+p.weeks:'Plan starts next week · Weeks remaining: '+p.weeks)
+        :(isSpanish?'Semanas restantes: '+p.weeks:'Weeks remaining: '+p.weeks);
+    } else if(p.isPostGya){
+      const postEnd=30+p.weeks;
+      wNote=isSpanish?'Semanas 31–'+postEnd+' (Semestre 2)':'Weeks 31–'+postEnd+' (Semester 2)';
+    } else if(p.isGrad){
+      wNote=isSpanish?'Semanas '+wkStart+'–46':'Weeks '+wkStart+'–46';
+    } else {
+      wNote=isSpanish?'Semanas '+wkStart+'–'+wkEnd:'Weeks '+wkStart+'–'+wkEnd;
+    }
+    html+='<div class="'+rowCls+'">'
+      +'<div class="gp-year-top">'
+        +'<div class="gp-year-left">'
+          +'<div class="gp-year-label">'+yearName+'</div>'
+          +'<div class="gp-year-sub">'+p.yearLabel+' · '+wNote+'</div>'
+        +'</div>'
+        +'<div class="gp-year-credits">'
+          +'<strong>'+p.credits+' '+(isSpanish?'créditos':'credits')+'</strong>'
+          +'<div class="gp-running-total">'+(isSpanish?'Acumulado: ':'Running Total: ')+p.cumEnd+' / 230</div>'
+        +'</div>'
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px;flex-wrap:wrap;gap:4px;">'
+        +'<div class="gp-pace '+paceClass+'">'+paceIcon+' '+p.pace.toFixed(1)+' '+(isSpanish?'cr/semana':'cr/week')+'</div>'
+        +'<div class="'+bmClass+'">'+bmIcon+' '+(isSpanish?'Benchmark: ':'Benchmark: ')+p.bmTarget+'</div>'
+      +'</div>';
+    if(p.isCur&&p.skippedWeek){
+      html+='<div style="margin-top:6px;padding:5px 8px;background:rgba(255,248,220,0.9);border-radius:5px;font-size:0.85em;color:#7a6000;">'
+        +'⏭️ '+(isSpanish
+          ?'Tu plan inicia la próxima semana. Cualquier crédito que completes esta semana te ayudará a avanzar más rápido.'
+          :'Your plan starts next week. Any credits you complete this week are a bonus.')
+        +'</div>';
+    }
+    if(showUseBtn&&p.isCur&&p.credits>0){
+      html+='<button class="gp-use-btn" onclick="useCreditsInCalculator('+p.credits+','+cfgSW+','+cfgEW+',false,0)">'
+        +(isSpanish?'➡️ Enviar '+p.credits+' créditos a calculadora — Año '+p.hsYr:'➡️ Send '+p.credits+' credits to calculator — Yr '+p.hsYr)
+        +'</button>';
+    }
+    html+='</div>';
+    // After the first non-current, non-GYA period: insert combined 2-year button
+    if(!combinedDone&&!p.isCur&&!p.isGyaSlot&&combinedCredits>0&&curP){
+      combinedDone=true;
+      html+='<div style="margin:2px 0 8px;">'
+        +'<button class="gp-use-btn" onclick="useCreditsInCalculator('+combinedCredits+','+cfgSW+','+cfgEW+',true,'+cfgNW+')">'
+        +(isSpanish
+          ?'📅 Enviar '+combinedCredits+' créditos a calculadora — Año '+curP.hsYr+' + '+p.hsYr
+          :'📅 Send '+combinedCredits+' credits to calculator — Yr '+curP.hsYr+' + '+p.hsYr)
+        +'</button></div>';
+    }
+  });
+  return html;
+}
+// Returns the next 4 upcoming GYA cohort windows (July and January each year)
+function gpGetGyaCohorts(today,freshmanYear){
+  const cohorts=[];
+  const y0=today.getFullYear();
+  for(let y=y0;y<=y0+3&&cohorts.length<4;y++){
+    const july=new Date(y,6,1);
+    if(july>today){
+      const sy=y;const hsYr=sy-freshmanYear+1;
+      cohorts.push({
+        label:(isSpanish?'Julio ':'July ')+y,
+        sy,hsYr,syLabel:sy+'–'+(sy+1),
+        timing:isSpanish?'inicio del Año '+hsYr:'Year '+hsYr+' start'
+      });
+    }
+    if(cohorts.length>=4)break;
+    const jan=new Date(y+1,0,15);
+    if(jan>today){
+      const sy=y;const hsYr=sy-freshmanYear+1;
+      cohorts.push({
+        label:(isSpanish?'Enero ':'January ')+(y+1),
+        sy,hsYr,syLabel:sy+'–'+(sy+1),
+        timing:isSpanish?'mitad del Año '+hsYr:'Year '+hsYr+' mid-year'
+      });
+    }
+  }
+  return cohorts.slice(0,4);
+}
+function calcGradPlan(){
+  const freshmanYear=parseInt(document.getElementById('gpFreshmanYear')?.value);
+  const credRaw=document.getElementById('gpCreditsRemaining')?.value;
+  const credRemaining=credRaw===''||credRaw===undefined?NaN:parseInt(credRaw);
+  const resultEl=document.getElementById('gpResult');
+  if(!resultEl)return;
+  if(!freshmanYear||isNaN(credRemaining)){resultEl.innerHTML='';return;}
+  const TOTAL=230;
+  const credEarned=TOTAL-credRemaining;
+  const classOf=freshmanYear+4;
+  const{week:curWeek,syData,currentSY,skippedWeek}=gpGetCurrentWeek();
+  const hsYear=currentSY-freshmanYear+1;
+  // Validation
+  if(hsYear<1||hsYear>8){
+    resultEl.innerHTML='<p style="color:#c62828;font-size:0.9em;">'+(isSpanish?'Por favor selecciona un año de inicio válido.':'Please select a valid freshman start year.')+'</p>';
+    return;
+  }
+  if(credRemaining<=0){
+    resultEl.innerHTML='<p style="color:#2e7d32;font-size:0.9em;">🎓 '+(isSpanish?'¡No quedan créditos — listo/a para graduarse!':'No credits remaining — ready to graduate!')+'</p>';
+    return;
+  }
+  if(credRemaining>TOTAL){
+    resultEl.innerHTML='<p style="color:#c62828;font-size:0.9em;">'+(isSpanish?'Ingresa un número entre 1 y 230.':'Please enter a number between 1 and 230.')+'</p>';
+    return;
+  }
+  // ── Standard 4-year front-loaded plan ──────────────────────────
+  const gradSY4=freshmanYear+3;
+  const periods4=gpBuildPeriods(freshmanYear,gradSY4,currentSY,curWeek,syData,skippedWeek);
+  const leftover4=gpFrontLoad(periods4,credEarned,credRemaining);
+  // Show alternatives when benchmarks are missed or credits don't fit in 4 years
+  // (pace cap means maxPace ≤ 2.0 always, so we trigger on missed benchmarks instead)
+  const hasMissedBm=periods4.some(p=>p.cumEnd<p.bmTarget);
+  const hasHighPace=hasMissedBm||leftover4>0;
+  // ── Y5 even-distribution plan ──────────────────────────────────
+  const gradSY5=freshmanYear+4;
+  const periods5=gpBuildPeriods(freshmanYear,gradSY5,currentSY,curWeek,syData,skippedWeek);
+  gpEvenLoad(periods5,credEarned,credRemaining);
+  // ── GYA scenario: GYA credits awarded externally in Year 3 sem 1 ─
+  // Uses gpBuildGyaPeriods to insert a GYA slot at the next July cohort
+  // Student earns credRemaining-60 on their own; GYA slot adds 60 to running total
+  const gyaEligible=hsYear>=2;
+  const gyaCredits=Math.min(60,credRemaining);
+  const gyaCohorts=gpGetGyaCohorts(new Date(),freshmanYear);
+  const periods4gya=gpBuildGyaPeriods(freshmanYear,gradSY4,currentSY,curWeek,syData,skippedWeek,gyaCredits,gyaCohorts);
+  const leftoverGya=gpFrontLoadGya(periods4gya,credEarned,credRemaining-gyaCredits);
+  const maxPaceGya=Math.max(...periods4gya.filter(p=>!p.isGyaSlot).map(p=>p.pace));
+  // ── Render ─────────────────────────────────────────────────────
+  let html='';
+  // Summary bar
+  html+='<div class="gp-header-bar">'
+    +'<span><strong>'+(isSpanish?'Clase de ':'Class of ')+'</strong>'+classOf+'</span>'
+    +'<span><strong>'+(isSpanish?'Créditos obtenidos: ':'Credits earned: ')+'</strong>'+credEarned+' / '+TOTAL+'</span>'
+    +'<span><strong>'+(isSpanish?'Año actual: ':'Current Year: ')+'</strong>'+(isSpanish?'Año ':'Year ')+hsYear+'</span>'
+    +'</div>';
+  // Compute combined credits (current year + next year) for each plan
+  const _curP4=periods4.find(p=>p.isCur);
+  const _nxtP4=periods4.find(p=>!p.isCur&&!p.isGyaSlot);
+  const combined4=(_curP4&&_nxtP4)?_curP4.credits+_nxtP4.credits:0;
+  const _curP5=periods5.find(p=>p.isCur);
+  const _nxtP5=periods5.find(p=>!p.isCur&&!p.isGyaSlot);
+  const combined5=(_curP5&&_nxtP5)?_curP5.credits+_nxtP5.credits:0;
+  // Build calcConfig objects so plan buttons auto-configure the calculator
+  // curEndWk: week the current year runs through (46 if it's the grad year, else totalWeeks)
+  // nextEndWk: same logic but for the next period year
+  const calcConfig4={
+    startWk:curWeek,
+    curEndWk:_curP4?(_curP4.isGrad?46:syData.totalWeeks):syData.totalWeeks,
+    nextEndWk:_nxtP4?(_nxtP4.isGrad?46:generateSchoolYear(_nxtP4.sy).totalWeeks):46
+  };
+  const calcConfig5={
+    startWk:curWeek,
+    curEndWk:_curP5?(_curP5.isGrad?46:syData.totalWeeks):syData.totalWeeks,
+    nextEndWk:_nxtP5?(_nxtP5.isGrad?46:generateSchoolYear(_nxtP5.sy).totalWeeks):46
+  };
+  // Section 1 — Traditional plan (always shown, dark-blue bordered container)
+  html+='<div class="gp-plan-section gp-plan-traditional">';
+  html+='<div class="gp-section-label">'
+    +(isSpanish?'Plan Tradicional — Clase de '+classOf:'Traditional Plan — Class of '+classOf)
+    +(leftover4>0?' <span>'
+      +(isSpanish?'('+leftover4+' créditos no caben)':'('+leftover4+' credits won\'t fit)')
+      +'</span>':'')
+    +'</div>';
+  html+=gpRenderRows(periods4,true,combined4,calcConfig4);
+  html+='</div>';
+  // Sections 2 & 3 appear when benchmarks are missed or credits won't fit in 4 years
+  if(hasHighPace){
+    // Section 2 — Y5 lighter option (medium-blue bordered container)
+    html+='<div class="gp-plan-section gp-plan-extended">';
+    html+='<div class="gp-section-label">'
+      +(isSpanish?'Opción: Añadir un Año — Clase de '+(classOf+1):'Option: Add a Year — Class of '+(classOf+1))
+      +'</div>';
+    html+=gpRenderRows(periods5,true,combined5,calcConfig5);
+    html+='</div>';
+    // Section 3 — GYA option (Year 2+ only, red card)
+    if(gyaEligible){
+      html+='<div class="gp-int-card gp-int-gya" style="font-size:0.95em;">';
+      html+='<div style="text-align:center;"><strong style="font-size:1.05em;">🏕️ '+(isSpanish?'Opción: Grizzly Youth Academy (GYA)':'Option: Grizzly Youth Academy (GYA)')+'</strong></div>';
+      html+='<p style="margin:5px 0 8px;">'
+        +(isSpanish
+          ?'GYA es un programa de un semestre que otorga hasta 60 créditos (una sola vez, para estudiantes de 16–18 años). Los cohortes comienzan en julio y en enero cada año escolar.'
+          :'GYA is a one-semester program awarding up to 60 credits (one time only, for students aged 16–18). Cohorts start in July and January each school year.')
+        +'</p>';
+      if(gyaCohorts.length>0){
+        html+='<div style="margin:0 0 10px;padding:8px 10px;background:rgba(255,255,255,0.55);border-radius:6px;">';
+        html+='<strong>'+(isSpanish?'📅 Próximas ventanas de cohorte:':'📅 Upcoming cohort windows:')+'</strong>';
+        html+='<ul style="margin:5px 0 0;padding-left:16px;">';
+        gyaCohorts.forEach(c=>{
+          html+='<li style="margin:3px 0;">'+c.label+' — '+c.timing+' ('+c.syLabel+')</li>';
+        });
+        html+='</ul></div>';
+      }
+      html+='<p style="margin:0 0 8px;color:#444;">'
+        +(isSpanish
+          ?'Si el/la estudiante completa GYA, su plan tradicional de 4 años se vería así:'
+          :'If the student completes GYA, the traditional 4-year plan would look like this:')
+        +'</p>';
+      if(maxPaceGya<=2.0){
+        html+='<p style="color:#b71c1c;font-weight:bold;margin:0 0 8px;white-space:nowrap;font-size:0.85em;text-align:center;">✅ '
+          +(isSpanish?'Con GYA, todos los años tendrían ritmo sostenible (≤ 2 cr/sem).':'With GYA, all years at a sustainable pace (≤ 2 cr/wk).')+'</p>';
+      } else if(maxPaceGya<=2.5){
+        html+='<p style="color:#b71c1c;margin:0 0 8px;">⚠️ '
+          +(isSpanish?'Con GYA, el ritmo mejora significativamente.':'With GYA, the pace improves significantly.')+'</p>';
+      }
+      if(leftoverGya>0){
+        html+='<p style="color:#c62828;margin:0 0 8px;">⚠️ '
+          +(isSpanish?'Incluso con GYA, quedan '+leftoverGya+' créditos sin asignar. Considera también el año extra.':'Even with GYA, '+leftoverGya+' credits remain unassigned. Also consider the extra year option.')+'</p>';
+      }
+      html+=gpRenderRows(periods4gya,false,0);
+      html+='</div>';
+    }
+  }
+  resultEl.innerHTML=html;
+}
+function useCreditsInCalculator(credits,startWk,endWk,crossYear,endWkNext){
+  // 1. Set credits
+  const input=document.getElementById('totalCredits');
+  if(!input)return;
+  input.value=credits;
+  input.dispatchEvent(new Event('input'));
+  if(startWk){
+    // 2. Set cross-year toggle and update UI (disables/enables #endWeek)
+    const toggle=document.getElementById('crossYearToggle');
+    if(toggle){
+      toggle.checked=!!crossYear;
+      updateCrossYearUI();
+    }
+    // 3. Set start week (options already populated for current school year)
+    const startSel=document.getElementById('startWeek');
+    if(startSel)startSel.value=String(startWk);
+    // 4a. Single-year: set end week directly (it is enabled)
+    if(!crossYear){
+      const endSel=document.getElementById('endWeek');
+      if(endSel&&!endSel.disabled)endSel.value=String(endWk);
+    }
+    // 4b. Cross-year: updateCrossYearUI already locked endWeek to totalWeeks;
+    //     just set the next-year finish week
+    if(crossYear&&endWkNext){
+      const endNextSel=document.getElementById('endWeekNext');
+      if(endNextSel)endNextSel.value=String(endWkNext);
+    }
+    // 5. Refresh DE dropdowns and recalculate
+    populateDeDropdowns();
+    populateOpDropdowns();
+    calculateCredits();
+  }
+  // 6. Scroll to top of calculator so user sees all the settings that were set
+  setTimeout(()=>{
+    const container=document.querySelector('.container');
+    if(container)container.scrollIntoView({behavior:'smooth',block:'start'});
+    else input.scrollIntoView({behavior:'smooth',block:'center'});
+    input.focus();
+  },150);
+}
+// =====================================================
 // INITIALIZATION
 // =====================================================
 document.addEventListener("DOMContentLoaded", () => {
+  // Prevent scroll from changing number inputs
+  document.addEventListener('wheel', function(e) {
+    if (document.activeElement && document.activeElement.type === 'number') {
+      document.activeElement.blur();
+    }
+  }, { passive: true });
+
   // --- Workshop gate: hide calculator elements until access granted ---
   document.getElementById('languagePrompt').style.display = 'none';
   document.querySelector('.container').style.display = 'none';
@@ -3451,6 +4043,7 @@ document.addEventListener("DOMContentLoaded", () => {
   populateNextYearCustomSkipDropdowns();
   document.getElementById("endWeek").value = "46";
   displayCurrentDateAndWeek();
+  populateGpFreshmanDropdown();
 
   // Auto-calculate: main inputs
   document.getElementById("totalCredits").addEventListener("input", calculateCredits);
