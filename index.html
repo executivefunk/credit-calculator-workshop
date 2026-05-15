@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Weekly Credit Calculator</title>
   <link rel="manifest" href="manifest.json">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
   <style>
 /* Base Layout */
 html, body {
@@ -118,8 +117,6 @@ select {
 }
 .top-actions button:hover { background-color: #555; color: white; }
 .top-actions button:disabled { opacity: 0.6; cursor: wait; }
-.top-actions button.btn-pdf { background: #2e7d32; color: #fff; border-color: #2e7d32; }
-.top-actions button.btn-pdf:hover { background: #1b5e20; }
 /* GRADUATION PLANNER */
 .grad-planner{background:#f0f4ff;border:2px solid #b0c4de;border-radius:10px;margin-bottom:18px;overflow:hidden;}
 .gp-header{display:flex;justify-content:center;align-items:center;padding:12px 16px;cursor:pointer;background:#e8f0fe;user-select:none;position:relative;}
@@ -154,6 +151,43 @@ select {
 .gp-pace-red{color:#c62828;font-weight:bold;}
 .gp-use-btn{margin-top:9px;width:100%;padding:9px 12px;background:#4a90d9;color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.82em;font-weight:bold;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;line-height:1.3;}
 .gp-use-btn:hover{background:#3a7bc8;}
+/* Mobile: shrink Graduation Planner text/buttons so nothing overflows.
+   Tightened progressively after testing on iPhone 13 mini (375px wide):
+   the "Click para enviar X créditos a calculadora — Año N" button text
+   needs ~0.6em to stay on one line, and the "Opción 1: Plan Tradicional —
+   Clase de 2028" section label needs ~0.68em with white-space:nowrap. */
+@media (max-width: 480px){
+  .gp-use-btn{font-size:0.52em;padding:8px 4px;white-space:nowrap;letter-spacing:-0.02em;overflow:hidden;}
+  .gp-header{padding:10px 12px;}
+  .gp-header-title{font-size:0.92em;line-height:1.2;}
+  .gp-header-arrow{font-size:1em;right:10px;}
+  .gp-body{padding:11px 12px 12px;}
+  .gp-header-bar{font-size:0.78em;padding:8px 10px;}
+  .gp-year-row{padding:9px 11px;}
+  .gp-year-label{font-size:0.88em;line-height:1.2;}
+  .gp-year-sub{font-size:0.74em;line-height:1.2;}
+  .gp-year-credits strong{font-size:0.88em;}
+  .gp-running-total{font-size:0.68em;}
+  .gp-pace{font-size:0.76em;}
+  .gp-bm-hit, .gp-bm-miss{font-size:0.74em;}
+  /* Force section labels (Opción 1 / Opción 2) onto a single line */
+  .gp-section-label{font-size:0.68em;padding:7px 8px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.01em;}
+  .gp-plan-section{padding:10px 10px 6px;}
+  .gp-int-card{font-size:0.78em;padding:8px 10px;}
+  .gp-intervention h4{font-size:0.86em;}
+  .gp-or-divider span{font-size:0.76em;}
+}
+@media (max-width: 360px){
+  .gp-use-btn{font-size:0.44em;padding:7px 2px;letter-spacing:-0.03em;}
+  .gp-header-title{font-size:0.84em;}
+  .gp-year-label{font-size:0.8em;}
+  .gp-year-sub{font-size:0.68em;}
+  .gp-year-credits strong{font-size:0.8em;}
+  .gp-running-total{font-size:0.64em;}
+  .gp-pace{font-size:0.7em;}
+  .gp-bm-hit, .gp-bm-miss{font-size:0.68em;}
+  .gp-section-label{font-size:0.6em;padding:6px 6px;letter-spacing:-0.02em;}
+}
 .gp-intervention{background:#fff8e1;border:1px solid #ffcc02;border-radius:8px;padding:12px 14px;margin-top:8px;}
 .gp-intervention h4{margin:0 0 8px;font-size:0.95em;color:#7b5800;}
 .gp-int-card{border-radius:6px;padding:9px 12px;margin-top:7px;font-size:0.88em;word-wrap:break-word;overflow-wrap:break-word;}
@@ -347,10 +381,54 @@ select {
 .teacher-box button.copy-btn:hover { background: #3a7bc8; }
 
 @media print {
+  @page { size: letter portrait; margin: 0.5in; }
+  /* Workshop-only chrome that should never print */
   #sessionTimer { display: none !important; }
   #workshopGate { display: none !important; }
   #teacherModal { display: none !important; }
   #sessionExpiredOverlay { display: none !important; }
+  /* Shared main-page print rules (mirror weekly calculator) */
+  .top-actions { display: none !important; }
+  body { background: white !important; margin: 0; padding: 0; }
+  .container { max-width: 100% !important; box-shadow: none !important; border-radius: 0 !important; padding: 12px !important; }
+  .print-page-1 { page-break-after: always; }
+  #langToggleBtn, #languagePrompt, .year-toggle { display: none !important; }
+  table, tr, td, th { page-break-inside: avoid !important; break-inside: avoid !important; }
+  .force-page-break { page-break-before: always !important; }
+
+  /* Packet layout: keep every labeled section intact across page breaks.
+     The browser may move a section to a new page rather than splitting it
+     in half, which is what we want for a printed handout. */
+  .disclaimer,
+  .warning,
+  .next-year-notice,
+  .holiday-box,
+  .de-class-box,
+  #crossYearBox,
+  #crossYearInner,
+  #nextYearSkipBox,
+  #currentYearSkipBox,
+  .grad-planner,
+  .gp-plan-section,
+  .gp-year-row,
+  .gp-int-card,
+  .gp-intervention,
+  .plan-buttons,
+  .footer-disclaimer {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  /* Allow the outer DE/OP boxes themselves to break if the two class cards
+     don't both fit on one page — but each .de-class-box still stays intact. */
+  .de-box, .op-box { page-break-inside: auto !important; break-inside: auto !important; }
+  /* Never strand a heading or label at the bottom of a page. */
+  h2, h3, h4, label { page-break-after: avoid !important; break-after: avoid !important; page-break-inside: avoid !important; break-inside: avoid !important; }
+  /* Keep an input together with its label by treating label+input as a unit. */
+  label + input, label + select, label + textarea { page-break-before: avoid !important; break-before: avoid !important; }
+  /* Result blocks (the credit-distribution summary) should print as units. */
+  .output > div, #result > div { page-break-inside: avoid !important; break-inside: avoid !important; }
+  /* Give a little breathing room at the top of new pages. */
+  .print-page-2 { padding-top: 4px; }
 }
 </style>
 </head>
@@ -419,7 +497,6 @@ select {
 </div>
 
 <div class="top-actions">
-  <button class="btn-pdf" onclick="saveMainPDF()" id="pdfButton" title="Save as PDF">PDF</button>
   <button onclick="window.print()" id="printButton" title="Print this page">Print</button>
 </div>
 
@@ -1086,6 +1163,22 @@ let weeks = [];       // populated from schoolYearData
 let storedPlan = {};
 let lastResultData = null;
 
+// Tracks whether the student has manually toggled each of the holiday
+// skip-week checkboxes. Once a key is true, the auto-affordability logic
+// in autoSetHealthySkips() will not overwrite that checkbox — the
+// student's explicit choice always wins. Cleared on year switch and on
+// language-prompt reset so the auto-logic can take over fresh.
+let userToggledSkips = {
+  thanksgiving: false, winter: false, spring: false,
+  nextYearThanksgiving: false, nextYearWinter: false, nextYearSpring: false
+};
+function resetUserToggledSkips() {
+  userToggledSkips = {
+    thanksgiving: false, winter: false, spring: false,
+    nextYearThanksgiving: false, nextYearWinter: false, nextYearSpring: false
+  };
+}
+
 function initializeYear(year) {
   activeStartYear = year;
   schoolYearData = generateSchoolYear(year);
@@ -1113,6 +1206,7 @@ function switchYear(mode) {
   document.getElementById("skipThanksgiving").checked = false;
   document.getElementById("skipWinter").checked = false;
   document.getElementById("skipSpring").checked = false;
+  resetUserToggledSkips();
   clearCustomSkipWeeks();
   resetDualEnrollment();
   resetOutsideProgram();
@@ -1355,6 +1449,7 @@ function showLanguagePrompt() {
     document.getElementById("skipThanksgiving").checked = false;
     document.getElementById("skipWinter").checked = false;
     document.getElementById("skipSpring").checked = false;
+    resetUserToggledSkips();
     clearCustomSkipWeeks();
     resetDualEnrollment();
     resetOutsideProgram();
@@ -2362,6 +2457,112 @@ function isWeekInOp(op, weekNum, isCurrentYear, actualWeek) {
 }
 
 // =====================================================
+// AUTO-SET HEALTHY SKIPS
+// =====================================================
+// Pre-check the holiday-break checkboxes (Thanksgiving, Winter, Spring —
+// plus the next-year set when cross-year is active) up to the maximum the
+// student can afford. The student "can afford" a break-week whenever
+// promoting that 0-credit week into the workload would still let the
+// target be hit at ≤ 2 cr/wk: i.e. any time their non-holiday pace is
+// already below 2 cr/wk, the unused slack can be spent on rest weeks.
+//
+// We compute a "holiday budget" = (usableWeeksWithoutHolidays) − ceil(target/2),
+// which is exactly the number of extra weeks beyond the minimum needed
+// to fit all credits at a sustainable 2 cr/wk pace. We then greedily
+// allocate that budget to holidays, taking Winter (2 contiguous weeks)
+// first since it's the most restorative single break, then Thanksgiving,
+// then Spring; current-year holidays before next-year ones.
+//
+// User manual choices (tracked in userToggledSkips) are always honored:
+// their cost is deducted from the budget BEFORE auto-allocation so the
+// remaining slack is what the auto-pass has to spend.
+function autoSetHealthySkips() {
+  const totalCredits = parseInt(document.getElementById('totalCredits').value);
+  const startWeek = parseInt(document.getElementById('startWeek').value);
+  let endWeek = parseInt(document.getElementById('endWeek').value);
+  if (!totalCredits || isNaN(startWeek) || isNaN(endWeek)) return;
+
+  const crossYearData = getCrossYearData();
+  let totalCurrent = 0;
+  if (crossYearData.active) {
+    const extMap = buildExtendedMap(crossYearData);
+    totalCurrent = extMap.totalCurrent;
+    endWeek = totalCurrent + crossYearData.endWeekNext;
+  }
+  const totalWeeks = endWeek - startWeek + 1;
+  if (totalWeeks <= 0) return;
+
+  const skipWeek1 = document.getElementById('skipWeek1Partial')?.checked || false;
+  const customSkipData = getCustomSkipWeeks();
+  let baselineSkips = (skipWeek1 ? 1 : 0) + customSkipData.skips.length;
+  if (crossYearData.active) {
+    const nextW1 = document.getElementById('nextYearSkipWeek1Partial')?.checked || false;
+    const nextCustom = getNextYearCustomSkipWeeks();
+    baselineSkips += (nextW1 ? 1 : 0) + nextCustom.length;
+  }
+
+  // Slack in weeks: usable weeks (without any holidays subtracted) minus
+  // the minimum weeks required to fit the target at the sustainable cap.
+  const SUSTAINABLE_PACE = 2;
+  const usableNoHolidays = totalWeeks - baselineSkips;
+  const minWeeksNeeded = Math.ceil(totalCredits / SUSTAINABLE_PACE);
+  let budget = Math.max(0, usableNoHolidays - minWeeksNeeded);
+
+  // Does this specific holiday week fall inside the student's plan range?
+  // If their plan is, say, weeks 30–46, Thanksgiving (week 22) doesn't
+  // apply — there's no point auto-checking a box that wouldn't change
+  // anything in the calc.
+  function inRange(week, isNextYear) {
+    const actualWeek = isNextYear ? totalCurrent + week : week;
+    return actualWeek >= startWeek && actualWeek <= endWeek;
+  }
+
+  // Candidates in priority order: Winter (2-week continuous break) first,
+  // then Thanksgiving (1 week), then Spring (1 week). Within each break,
+  // current year is preferred over next year so the student gets the
+  // sooner relief first.
+  const candidates = [
+    { id: 'skipWinter',               key: 'winter',              weeks: 2,
+      applicable: inRange(26, false) && inRange(27, false) },
+    { id: 'nextYearSkipWinter',       key: 'nextYearWinter',      weeks: 2,
+      applicable: crossYearData.active && inRange(26, true) && inRange(27, true) },
+    { id: 'skipThanksgiving',         key: 'thanksgiving',        weeks: 1,
+      applicable: inRange(22, false) },
+    { id: 'nextYearSkipThanksgiving', key: 'nextYearThanksgiving', weeks: 1,
+      applicable: crossYearData.active && inRange(22, true) },
+    { id: 'skipSpring',               key: 'spring',              weeks: 1,
+      applicable: inRange(41, false) },
+    { id: 'nextYearSkipSpring',       key: 'nextYearSpring',      weeks: 1,
+      applicable: crossYearData.active && inRange(41, true) }
+  ];
+
+  // Pass 1: subtract the weight of any user-checked boxes from the budget
+  // up front. User choices are always honored; the auto-pass only gets to
+  // spend what's left.
+  candidates.forEach(function(c) {
+    if (!c.applicable) return;
+    if (!userToggledSkips[c.key]) return;
+    const el = document.getElementById(c.id);
+    if (el && el.checked) budget -= c.weeks;
+  });
+
+  // Pass 2: greedily auto-toggle the remaining boxes. Take each holiday
+  // if its weight fits within the remaining budget; otherwise uncheck it.
+  candidates.forEach(function(c) {
+    if (!c.applicable) return;
+    if (userToggledSkips[c.key]) return;
+    const el = document.getElementById(c.id);
+    if (!el) return;
+    if (budget >= c.weeks) {
+      el.checked = true;
+      budget -= c.weeks;
+    } else {
+      el.checked = false;
+    }
+  });
+}
+
+// =====================================================
 // CALCULATE CREDITS
 // =====================================================
 function calculateCredits() {
@@ -2374,6 +2575,11 @@ function calculateCredits() {
     document.getElementById("planButtons").style.display = "none";
     return;
   }
+  // Auto-toggle the holiday-break checkboxes (Thanksgiving / Winter / Spring,
+  // plus the next-year equivalents when cross-year is active) based on
+  // whether the target still fits at a sustainable pace with those breaks
+  // taken. Skips boxes the student has manually toggled.
+  autoSetHealthySkips();
   const skipThanksgiving = document.getElementById("skipThanksgiving").checked;
   const skipWinter = document.getElementById("skipWinter").checked;
   const skipSpring = document.getElementById("skipSpring").checked;
@@ -2867,7 +3073,23 @@ function generatePlan(type) {
   const isIOS = /iPhone|iPad|iPod/i.test(printWin.navigator.userAgent || '');
   const isSmallViewport = printWin.matchMedia && printWin.matchMedia('(max-width: 900px)').matches;
   const shouldSplit = isIOS || isSmallViewport;
-  const maxRowsFirst = 16;
+  // When a DE or OP class is active, the popup topbar shows an extra
+  // "You will be earning X credits from…" notice plus its "Show ..." toggle
+  // — roughly one row of vertical space per active class. With the default
+  // 16-row first chunk, those extra notices push rows off the bottom of
+  // page 1 and onto page 2, where they sit stranded above the forced
+  // page-break to chunk 2. Count how many highlights are active and
+  // shrink the first chunk by ~2 rows per active class (a safety margin
+  // over the actual ~1 row each notice costs, in case class names wrap
+  // to a second line). Floor at 8 rows so a plan with all four highlights
+  // still gets a usable first page. Subsequent chunks always have 23 rows
+  // because they have no topbar above them.
+  const highlightCount =
+    ((deData && deData.de1 && deData.de1.active) ? 1 : 0) +
+    ((deData && deData.de2 && deData.de2.active) ? 1 : 0) +
+    ((opData && opData.op1 && opData.op1.active) ? 1 : 0) +
+    ((opData && opData.op2 && opData.op2.active) ? 1 : 0);
+  const maxRowsFirst = Math.max(8, 16 - highlightCount * 2);
   const maxRowsNext = 23;
 
   // Year divider row for cross-year plans
@@ -2939,10 +3161,7 @@ function generatePlan(type) {
 
   const yearLabel = schoolYearData.yearLabel;
 
-  const pdfFilename = 'Credit_Tracker_Plan_' + type + '_' + yearLabel.replace(/\u2013/g, '-') + '.pdf';
-
   const html = '<!doctype html><html><head><meta charset="utf-8"><title>Plan ' + type + ' \u2013 ' + yearLabel + ' Credit Tracker</title>' +
-  '<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"><\/script>' +
   '<style>' +
   'body { font-family: Arial, sans-serif; padding: 16px; }' +
   'table { border-collapse: collapse; width: 100%; margin-top: 12px; table-layout: fixed; }' +
@@ -2986,14 +3205,15 @@ function generatePlan(type) {
   '.popup-actions button { background-color: white; color: black; border: 1px solid black; padding: 8px 12px; border-radius: 6px; cursor: pointer; }' +
   '.popup-actions button:hover { background:#555; color:#fff; }' +
   '.popup-actions button:disabled { opacity:0.6; cursor:wait; }' +
-  '.popup-actions button.btn-pdf { background:#2e7d32; color:#fff; border-color:#2e7d32; }' +
-  '.popup-actions button.btn-pdf:hover { background:#1b5e20; }' +
   '.print-tips { background: #fff3cd; border: 1px solid #ffe49a; color: #6b5b00; padding: 10px 14px; border-radius: 8px; font-size: 0.95rem; max-width: 420px; justify-self: start; align-self: start; margin-top: 0; margin-left: 10px; }' +
   '.print-tips strong { font-weight: 700; } .print-tips ul { margin: 6px 0 0 1.1em; padding: 0; } .print-tips li { margin: 2px 0; }' +
   '.topbar .tools { justify-self: start; align-self: start; display: flex; flex-direction: column; gap: 6px; margin-left: 0; margin-right: 0; }' +
   '@media screen and (min-width: 1024px) { .topbar .tools { position: relative; left: -77px; } }' +
   '@media screen { .page-cut { display: none !important; } table.planner { border-collapse: collapse; width: 100%; } .print-chunk { break-inside: auto; page-break-inside: auto; }' +
   '.print-chunk + .page-cut + .print-chunk table.planner, .print-chunk ~ .print-chunk table.planner { margin-top: -1px; border-top: 0; }' +
+  // On-screen: show the column header only on the first chunk so the popup
+  // reads as one continuous table. The @media print rule below overrides this
+  // so every chunk's thead is visible on printed pages.
   '.print-chunk:first-of-type table.planner thead { display: table-header-group !important; }' +
   '.print-chunk ~ .print-chunk table.planner thead { display: none !important; } }' +
   '.notes { display: none !important; }' +
@@ -3022,7 +3242,7 @@ function generatePlan(type) {
   'table.planner thead { display: table-header-group !important; page-break-inside: avoid !important; break-inside: avoid !important; }' +
   'table.planner tbody { page-break-inside: auto !important; break-inside: auto !important; } }' +
   '</style></head><body>' +
-  '<div class="popup-actions"><button class="btn-pdf" id="pdfBtn" onclick="savePDF()">PDF</button><button id="printBtn" onclick="window.print()">Print</button></div>' +
+  '<div class="popup-actions"><button id="printBtn" onclick="window.print()">Print</button></div>' +
   '<div class="topbar"><div class="summarywrap">' +
   '<div class="summarybar"><span class="badge badge-lg">Target: <strong id="tgt">' + C + '</strong></span><span class="badge badge-lg">Assigned: <strong id="asgn">0</strong></span></div>' +
   '<div class="summarybar" style="margin-top:6px;"><span class="badge badge-lg">Remaining: <strong id="rem">0</strong></span></div>' +
@@ -3182,65 +3402,12 @@ function generatePlan(type) {
     'if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", __init); } else { __init(); }' +
     '})();';
 
-  // Build PDF save function script (embedded into HTML below)
-  const pdfScriptContent =
-    'var pdfFilename = ' + JSON.stringify(pdfFilename) + ';' +
-
-    'function getPdfOpts() {' +
-    '  return {' +
-    '    margin: [0.3, 0.2, 0.3, 0.2],' +
-    '    filename: pdfFilename,' +
-    '    image: { type: "jpeg", quality: 0.95 },' +
-    '    html2canvas: { scale: 2, useCORS: true, logging: false },' +
-    '    jsPDF: { unit: "in", format: "letter", orientation: "portrait" },' +
-    '    pagebreak: { mode: ["css", "legacy"] }' +
-    '  };' +
-    '}' +
-
-    'function prepForExport() {' +
-    '  var actions = document.querySelector(".popup-actions");' +
-    '  var tools = document.querySelector(".topbar .tools");' +
-    '  var tips = document.querySelector(".print-tips");' +
-    '  var adjustCols = document.querySelectorAll(".col-adjust");' +
-    '  if (actions) actions.style.display = "none";' +
-    '  if (tools) tools.style.display = "none";' +
-    '  if (tips) tips.style.display = "none";' +
-    '  adjustCols.forEach(function(el) { el.style.display = "none"; });' +
-    '  return { actions: actions, tools: tools, tips: tips, adjustCols: adjustCols };' +
-    '}' +
-
-    'function restoreAfterExport(els) {' +
-    '  if (els.actions) els.actions.style.display = "flex";' +
-    '  if (els.tools) els.tools.style.display = "";' +
-    '  if (els.tips) els.tips.style.display = "";' +
-    '  els.adjustCols.forEach(function(el) { el.style.display = ""; });' +
-    '}' +
-
-    'function savePDF() {' +
-    '  var btn = document.getElementById("pdfBtn");' +
-    '  var orig = btn.textContent;' +
-    '  btn.textContent = "Generating...";' +
-    '  btn.disabled = true;' +
-    '  var els = prepForExport();' +
-    '  html2pdf().set(getPdfOpts()).from(document.body).save().then(function() {' +
-    '    restoreAfterExport(els);' +
-    '    btn.textContent = orig;' +
-    '    btn.disabled = false;' +
-    '  }).catch(function(err) {' +
-    '    restoreAfterExport(els);' +
-    '    btn.textContent = orig;' +
-    '    btn.disabled = false;' +
-    '    alert("PDF generation failed: " + err.message);' +
-    '  });' +
-    '}';
-
-  // Embed the scripts inline in the HTML and write the document in one shot.
-  // This guarantees both scripts are parsed AFTER the table rows, so the
-  // listener-attachment code never runs against an empty/partial DOM —
-  // which is what was causing the popup to need a second open to work.
+  // Embed the behavior script inline in the HTML and write the document in
+  // one shot. Inline parsing guarantees the script runs AFTER the table rows,
+  // so the listener-attachment code never runs against an empty/partial DOM —
+  // which is what used to cause the popup to need a second open to work.
   const fullHtml = html.replace('</body></html>',
     '<' + 'script>' + behavior + '<' + '/script>' +
-    '<' + 'script>' + pdfScriptContent + '<' + '/script>' +
     '</body></html>');
 
   printWin.document.write(fullHtml);
@@ -3437,56 +3604,6 @@ function formatEmailDate() {
     ? ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
     : ['January','February','March','April','May','June','July','August','September','October','November','December'];
   return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
-}
-
-function getMainPdfOpts() {
-  const yearLabel = schoolYearData ? schoolYearData.yearLabel : '';
-  return {
-    margin: [0.3, 0.2, 0.3, 0.2],
-    filename: 'Weekly_Credit_Plan_' + yearLabel.replace(/–/g, '-') + '.pdf',
-    image: { type: 'jpeg', quality: 0.95 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-    pagebreak: { mode: ['css', 'legacy'] }
-  };
-}
-
-function prepMainForExport() {
-  const topActions = document.querySelector('.top-actions');
-  const langBtn = document.getElementById('langToggleBtn');
-  const yearToggle = document.getElementById('yearToggle');
-  const timer = document.getElementById('sessionTimer');
-  if (topActions) topActions.style.display = 'none';
-  if (langBtn) langBtn.style.display = 'none';
-  if (yearToggle) yearToggle.style.display = 'none';
-  if (timer) timer.style.display = 'none';
-  return { topActions, langBtn, yearToggle, timer };
-}
-
-function restoreMainAfterExport(els) {
-  if (els.topActions) els.topActions.style.display = 'flex';
-  if (els.langBtn) els.langBtn.style.display = '';
-  if (els.yearToggle) els.yearToggle.style.display = '';
-  if (els.timer) els.timer.style.display = '';
-}
-
-function saveMainPDF() {
-  const btn = document.getElementById('pdfButton');
-  const orig = btn.textContent;
-  btn.textContent = 'Generating...';
-  btn.disabled = true;
-  const els = prepMainForExport();
-  const container = document.querySelector('.container');
-  html2pdf().set(getMainPdfOpts()).from(container).save().then(function() {
-    restoreMainAfterExport(els);
-    btn.textContent = orig;
-    btn.disabled = false;
-  }).catch(function(err) {
-    restoreMainAfterExport(els);
-    btn.textContent = orig;
-    btn.disabled = false;
-    alert('PDF generation failed: ' + err.message);
-  });
 }
 
 function toggleLanguage() {
@@ -3903,33 +4020,61 @@ function calcGradPlan(){
     curEndWk:_curP5?(_curP5.isGrad?46:syData.totalWeeks):syData.totalWeeks,
     nextEndWk:_nxtP5?(_nxtP5.isGrad?46:generateSchoolYear(_nxtP5.sy).totalWeeks):46
   };
-  // Section 1 — Traditional plan
+  // Section 1 — Traditional plan.
+  // When some credits won't fit in 4 years, we still print the section title
+  // (so the student sees that Option 1 was considered), but the "(N credits
+  // won't fit)" notice gets its own line below the title so it never wraps
+  // awkwardly across the green title bar. We also skip rendering the weekly
+  // breakdown rows in that case — Option 1 isn't actually a workable plan,
+  // so showing the rows would be misleading.
+  const opt1WontFit = leftover4 > 0;
   html+='<div class="gp-plan-section gp-plan-traditional">';
   html+='<div class="gp-section-label">'
     +(isSpanish?'Opción 1: Plan Tradicional — Clase de '+classOf:'Option 1: Traditional Plan — Class of '+classOf)
-    +(leftover4>0?' <span>'
-      +(isSpanish?'('+leftover4+' créditos no caben)':'('+leftover4+' credits won\'t fit)')
-      +'</span>':'')
     +'</div>';
-  html+=gpRenderRows(periods4,true,combined4,calcConfig4);
+  if(opt1WontFit){
+    html+='<p style="text-align:center;color:#c62828;font-weight:bold;font-size:0.95em;margin:8px 0 2px;line-height:1.3;">'
+      +(isSpanish?'('+leftover4+' créditos no caben)':'('+leftover4+' credits won\'t fit)')
+      +'</p>';
+  } else {
+    html+=gpRenderRows(periods4,true,combined4,calcConfig4);
+  }
   html+='</div>';
   // Sections 2 & 3 appear when benchmarks are missed or credits won't fit in 4 years
   if(hasHighPace){
     // -Or- divider
     html+='<div class="gp-or-divider"><span>'+(isSpanish?'- O -':'- Or -')+'</span></div>';
-    // Section 2 — Y5 lighter option
+    // Section 2 — Y5 lighter option.
+    // If the max pace across the 5-year plan is still above 2 cr/wk, the
+    // student is in tough enough territory that an automated even-distribution
+    // plan isn't a fair recommendation. Replace the rows with a friendly
+    // counselor-referral message in that case.
+    const maxPace5 = periods5.length > 0 ? Math.max(...periods5.map(p=>p.pace)) : 0;
+    const opt2NeedsCounselor = maxPace5 > 2.0;
     html+='<div class="gp-plan-section gp-plan-extended">';
     html+='<div class="gp-section-label">'
       +(isSpanish?'Opción 2: Añadir un Año — Clase de '+(classOf+1):'Option 2: Add a Year — Class of '+(classOf+1))
       +'</div>';
-    html+=gpRenderRows(periods5,true,combined5,calcConfig5);
-    html+='</div>';
-    // -Or- divider before GYA
-    if(gyaEligible){
-      html+='<div class="gp-or-divider"><span>'+(isSpanish?'- O -':'- Or -')+'</span></div>';
+    if(opt2NeedsCounselor){
+      html+='<div class="gp-int-card" style="background:#fff8e1;border:1px solid #ffcc02;font-size:0.95em;line-height:1.45;">'
+        +'🗓️ <strong>'+(isSpanish?'Habla con tu consejero/a escolar':'Talk with your school counselor')+'</strong><br>'
+        +(isSpanish
+          ?'Para terminar a tiempo necesitarás un plan personalizado. Agenda una cita pronto con tu consejero/a escolar para diseñar juntos el mejor camino para ti.'
+          :'Finishing on time will need a customized plan with extra support. Set up an appointment soon with your school counselor so you can design the best path together.')
+        +'</div>';
+    } else {
+      html+=gpRenderRows(periods5,true,combined5,calcConfig5);
     }
-    // Section 3 — GYA option (Year 2+ only, proper Option 3 card)
-    if(gyaEligible){
+    html+='</div>';
+    // Section 3 — GYA option (Year 2+ only). Hide the entire card if GYA
+    // isn't actually a working solution: leftoverGya>0 means credits still
+    // don't fit even with GYA's 60 credits, and maxPaceGya>2.0 means GYA
+    // still leaves the student above a sustainable pace. In either case
+    // showing GYA would mislead the student into thinking it solves the
+    // problem when it doesn't.
+    const gyaWorks = gyaEligible && leftoverGya===0 && maxPaceGya<=2.0;
+    if(gyaWorks){
+      html+='<div class="gp-or-divider"><span>'+(isSpanish?'- O -':'- Or -')+'</span></div>';
       html+='<div class="gp-int-card gp-int-gya" style="font-size:0.95em;">';
       html+='<div style="text-align:center;"><strong style="font-size:1.05em;">'
         +(isSpanish?'Opción 3: Grizzly Youth Academy (GYA)':'Option 3: Grizzly Youth Academy (GYA)')+'</strong></div>';
@@ -3952,17 +4097,8 @@ function calcGradPlan(){
           ?'Si el/la estudiante completa GYA, su plan tradicional de 4 años se vería así:'
           :'If the student completes GYA, the traditional 4-year plan would look like this:')
         +'</p>';
-      if(maxPaceGya<=2.0){
-        html+='<p style="color:#b71c1c;font-weight:bold;margin:0 0 8px;white-space:nowrap;font-size:0.85em;text-align:center;">✅ '
-          +(isSpanish?'Con GYA, todos los años tendrían ritmo sostenible (≤ 2 cr/sem).':'With GYA, all years at a sustainable pace (≤ 2 cr/wk).')+'</p>';
-      } else if(maxPaceGya<=2.5){
-        html+='<p style="color:#b71c1c;margin:0 0 8px;">⚠️ '
-          +(isSpanish?'Con GYA, el ritmo mejora significativamente.':'With GYA, the pace improves significantly.')+'</p>';
-      }
-      if(leftoverGya>0){
-        html+='<p style="color:#c62828;margin:0 0 8px;">⚠️ '
-          +(isSpanish?'Incluso con GYA, quedan '+leftoverGya+' créditos sin asignar. Considera también el año extra.':'Even with GYA, '+leftoverGya+' credits remain unassigned. Also consider the extra year option.')+'</p>';
-      }
+      html+='<p style="color:#b71c1c;font-weight:bold;margin:0 0 8px;font-size:0.85em;text-align:center;line-height:1.25;">✅ '
+        +(isSpanish?'Con GYA, todos los años tendrían ritmo sostenible (≤ 2 cr/sem).':'With GYA, all years at a sustainable pace (≤ 2 cr/wk).')+'</p>';
       html+=gpRenderRows(periods4gya,false,0);
       html+='</div>';
     }
@@ -4002,11 +4138,23 @@ function useCreditsInCalculator(credits,startWk,endWk,crossYear,endWkNext){
     populateOpDropdowns();
     calculateCredits();
   }
-  // 6. Scroll to the credits input so user sees the calculator settings
-  setTimeout(()=>{
-    input.scrollIntoView({behavior:'smooth',block:'center'});
-    input.focus();
-  },150);
+  // 6. Scroll. Desktop is left exactly as the original implementation; only
+  // mobile gets a different target — the year-toggle row (the 2025-2026 /
+  // 2026-2027 switcher) lands at the top of the viewport so the user can
+  // see the year context, the title, and the populated form below it.
+  if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
+    setTimeout(()=>{
+      const yearToggle = document.getElementById('yearToggle');
+      if (yearToggle && yearToggle.scrollIntoView) yearToggle.scrollIntoView({behavior:'smooth',block:'start'});
+      else input.scrollIntoView({behavior:'smooth',block:'start'});
+    },150);
+  } else {
+    // Desktop: ORIGINAL behavior — do not modify.
+    setTimeout(()=>{
+      input.scrollIntoView({behavior:'smooth',block:'center'});
+      input.focus();
+    },150);
+  }
 }
 // =====================================================
 // INITIALIZATION
@@ -4064,18 +4212,32 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("crossYearToggle").addEventListener("change", function() { updateCrossYearUI(); populateDeDropdowns(); populateOpDropdowns(); calculateCredits(); });
   document.getElementById("endWeekNext").addEventListener("change", function() { populateDeDropdowns(); populateOpDropdowns(); calculateCredits(); });
 
-  // Auto-calculate: next-year skip checkboxes
-  ["nextYearSkipWeek1Partial", "nextYearSkipThanksgiving", "nextYearSkipWinter", "nextYearSkipSpring"].forEach(function(id) {
-    document.getElementById(id).addEventListener("change", calculateCredits);
+  // Skip checkboxes that the auto-affordability logic in autoSetHealthySkips()
+  // is allowed to manage. When the student manually toggles any of these,
+  // record the choice in userToggledSkips so the auto-logic never overwrites
+  // it on a later recalculation. Week 1 partial skips are NOT auto-managed
+  // (they're a structural plan setting, not a healthy-break preference).
+  const HEALTHY_SKIP_MAP = {
+    skipThanksgiving: 'thanksgiving',
+    skipWinter: 'winter',
+    skipSpring: 'spring',
+    nextYearSkipThanksgiving: 'nextYearThanksgiving',
+    nextYearSkipWinter: 'nextYearWinter',
+    nextYearSkipSpring: 'nextYearSpring'
+  };
+  Object.keys(HEALTHY_SKIP_MAP).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("change", function() {
+      userToggledSkips[HEALTHY_SKIP_MAP[id]] = true;
+      calculateCredits();
+    });
   });
-  // (Next-year custom skip events are wired dynamically in addNextYearCustomSkipWeek)
 
-  // Auto-calculate: current-year skip checkboxes
+  // Non-managed skip checkboxes (Week 1 partial — current and next year)
+  document.getElementById("nextYearSkipWeek1Partial").addEventListener("change", calculateCredits);
   document.getElementById("skipWeek1Partial").addEventListener("change", calculateCredits);
-  document.getElementById("skipThanksgiving").addEventListener("change", calculateCredits);
-  document.getElementById("skipWinter").addEventListener("change", calculateCredits);
-  document.getElementById("skipSpring").addEventListener("change", calculateCredits);
-  // (Current-year custom skip events are wired dynamically in addCustomSkipWeek)
+  // (Custom skip events are wired dynamically in addCustomSkipWeek / addNextYearCustomSkipWeek)
 
   // Auto-calculate: dual enrollment inputs
   document.getElementById("deToggle").addEventListener("change", function() { updateDeUI(); calculateCredits(); });
