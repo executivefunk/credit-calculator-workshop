@@ -382,55 +382,185 @@ select {
 .teacher-box button.copy-btn { background: #4a90d9; color: white; border-color: #4a90d9; }
 .teacher-box button.copy-btn:hover { background: #3a7bc8; }
 
+/* Print-only elements hidden by default on screen */
+.print-only,
+.print-section-title,
+.print-name-line,
+.print-running-footer { display: none; }
+
+/* Screen-only on-screen tip near the Print button */
+.print-tip-note {
+  font-size: 0.78em;
+  color: #666;
+  text-align: center;
+  margin: 6px auto 0;
+  font-style: italic;
+  max-width: 360px;
+  line-height: 1.4;
+}
+
 @media print {
-  @page { size: letter portrait; margin: 0.5in; }
-  /* Workshop-only chrome that should never print */
+  /* Extra bottom margin reserves space for the repeating footer */
+  @page { size: letter portrait; margin: 0.55in 0.5in 0.75in 0.5in; }
+
+  /* === WORKSHOP-ONLY CHROME (never print) === */
   #sessionTimer { display: none !important; }
   #workshopGate { display: none !important; }
   #teacherModal { display: none !important; }
   #sessionExpiredOverlay { display: none !important; }
-  /* Shared main-page print rules (mirror weekly calculator) */
-  .top-actions { display: none !important; }
+
+  /* === BASE PRINT RESET === */
   body { background: white !important; margin: 0; padding: 0; }
   .container { max-width: 100% !important; box-shadow: none !important; border-radius: 0 !important; padding: 12px !important; }
-  .print-page-1 { page-break-after: always; }
-  #langToggleBtn, #languagePrompt, .year-toggle { display: none !important; }
-  table, tr, td, th { page-break-inside: avoid !important; break-inside: avoid !important; }
-  .force-page-break { page-break-before: always !important; }
 
-  /* Packet layout: keep every labeled section intact across page breaks.
-     The browser may move a section to a new page rather than splitting it
-     in half, which is what we want for a printed handout. */
+  /* === HIDE UI CHROME FROM PRINT === */
+  .top-actions { display: none !important; }
+  #langToggleBtn, #languagePrompt, .year-toggle { display: none !important; }
+  .gp-header-hint, .gp-header-arrow { display: none !important; }
+  #planButtons { display: none !important; }
+  .print-tip-note { display: none !important; }
+
+  /* === SHOW PRINT-ONLY ELEMENTS === */
+  .print-section-title { display: block !important; }
+  .print-name-line { display: flex !important; }
+  .print-running-footer { display: block !important; }
+
+  /* === HIDE UNUSED / COLLAPSED SECTIONS === */
+  /* Graduation planner: hidden when its body is collapsed (pure nav chrome). */
+  .grad-planner:not(:has(#gpBody[style*="block"])) {
+    display: none !important;
+  }
+  /* Cross-year box: hidden when the user hasn't toggled it on. */
+  #crossYearBox:not(:has(#crossYearInner[style*="block"])) {
+    display: none !important;
+  }
+  /* Dual enrollment: hidden when not expanded. */
+  .de-box:not(:has(.de-inner.visible)) {
+    display: none !important;
+  }
+  /* Outside program: hidden when not expanded. (opInner shares the .de-inner class.) */
+  .op-box:not(:has(.de-inner.visible)) {
+    display: none !important;
+  }
+  /* Result section: hidden when no plan has been calculated. */
+  .result-section:has(#result:empty) {
+    display: none !important;
+  }
+
+  /* === GRADUATION PLANNER PRINT TREATMENT === */
+  .grad-planner:has(#gpBody[style*="block"]) {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  /* Strip the clickable dropdown look from the planner header; keep the title
+     visible — it acts as the section heading. */
+  .grad-planner .gp-header {
+    background: transparent !important;
+    padding: 0 0 8px !important;
+    cursor: default !important;
+  }
+
+  /* === SECTION TITLE BARS ===
+     Each print-section-title forces a new page and provides a clean,
+     consistent heading at the top. When the parent section is hidden
+     (collapsed), the title is also hidden — no orphan title pages. */
+  .print-section-title {
+    page-break-before: always !important;
+    break-before: page !important;
+    font-size: 14pt !important;
+    font-weight: bold !important;
+    color: #1a3a6b !important;
+    border-bottom: 1.5px solid #1a3a6b !important;
+    padding: 0 0 6px !important;
+    margin: 0 0 14px !important;
+  }
+
+  /* === FERPA-SAFE BLANK WRITE-IN LINE (top of page 1) === */
+  .print-name-line {
+    align-items: flex-end !important;
+    gap: 12px !important;
+    margin: 0 0 14px !important;
+    font-size: 10.5pt !important;
+    color: #333 !important;
+  }
+  .print-name-line .write-label { flex-shrink: 0; font-weight: 500; }
+  .print-name-line .write-blank {
+    flex: 1;
+    border-bottom: 1px solid #888;
+    height: 18px;
+  }
+
+  /* === FOOTER DISCLAIMER POLISH ===
+     Deliberate framed box rather than orphaned small print. */
+  .footer-disclaimer {
+    page-break-before: always !important;
+    break-before: page !important;
+    font-size: 10.5pt !important;
+    line-height: 1.55 !important;
+    padding: 14px 18px !important;
+    border: 1.5px solid #999 !important;
+    border-radius: 6px !important;
+    background: #fafafa !important;
+    color: #222 !important;
+    margin-top: 8px !important;
+  }
+
+  /* === REPEATING IDENTITY FOOTER (FERPA-safe, no PII) ===
+     Renders on every printed page via position:fixed (Chrome). */
+  .print-running-footer {
+    position: fixed !important;
+    bottom: 0.25in !important;
+    left: 0.5in !important;
+    right: 0.5in !important;
+    text-align: center !important;
+    font-size: 8.5pt !important;
+    color: #888 !important;
+    border-top: 0.5px solid #ccc !important;
+    padding-top: 5px !important;
+  }
+
+  /* === KEEP-TOGETHER RULES ===
+     Atomic items shouldn't split mid-element. */
   .disclaimer,
   .warning,
   .next-year-notice,
-  .holiday-box,
   .de-class-box,
-  #crossYearBox,
-  #crossYearInner,
-  #nextYearSkipBox,
-  #currentYearSkipBox,
-  .grad-planner,
   .gp-plan-section,
   .gp-year-row,
   .gp-int-card,
   .gp-intervention,
-  .plan-buttons,
+  .holiday-option,
   .footer-disclaimer {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
-  /* Allow the outer DE/OP boxes themselves to break if the two class cards
-     don't both fit on one page — but each .de-class-box still stays intact. */
-  .de-box, .op-box { page-break-inside: auto !important; break-inside: auto !important; }
+  /* Long containers must be allowed to break across pages. */
+  .de-box, .op-box, #crossYearBox, #crossYearInner, .grad-planner,
+  .holiday-box, #currentYearSkipBox, #nextYearSkipBox, .result-section {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  /* === SMALL POLISH === */
   /* Never strand a heading or label at the bottom of a page. */
-  h2, h3, h4, label { page-break-after: avoid !important; break-after: avoid !important; page-break-inside: avoid !important; break-inside: avoid !important; }
-  /* Keep an input together with its label by treating label+input as a unit. */
-  label + input, label + select, label + textarea { page-break-before: avoid !important; break-before: avoid !important; }
-  /* Result blocks (the credit-distribution summary) should print as units. */
-  .output > div, #result > div { page-break-inside: avoid !important; break-inside: avoid !important; }
-  /* Give a little breathing room at the top of new pages. */
-  .print-page-2 { padding-top: 4px; }
+  h2, h3, h4, label {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  /* Keep an input glued to its label. */
+  label + input, label + select, label + textarea {
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+  }
+  /* Tables stay intact. */
+  table, tr, td, th {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  /* Legacy escape hatch. */
+  .force-page-break { page-break-before: always !important; }
 }
 </style>
 </head>
@@ -500,6 +630,12 @@ select {
 
 <div class="top-actions">
   <button onclick="window.print()" id="printButton" title="Print this page">Print</button>
+  <p class="print-tip-note" id="printTipNote">Tip: For numbered pages, turn on &ldquo;Headers and footers&rdquo; in your browser&rsquo;s print dialog.</p>
+</div>
+
+<!-- FERPA-safe repeating footer (prints on every page, no student PII) -->
+<div class="print-running-footer" id="printRunningFooter">
+  <span id="printRunningFooterText">Graduation Plan Packet &mdash; printed </span><span id="printFooterDate"></span>
 </div>
 
 <div class="container">
@@ -541,6 +677,11 @@ select {
   </div>
 
   <div class="print-page-1">
+    <!-- FERPA-safe blank write-in line (visual only, never captures data) -->
+    <div class="print-name-line">
+      <span class="write-label" id="printNameLabel">Student name:</span>
+      <span class="write-blank" aria-hidden="true"></span>
+    </div>
     <h2>Weekly Credit Calculator</h2>
     <p id="currentDate" style="text-align: center; font-weight: bold; margin-top: -10px;"></p>
     <p id="currentWeek" style="text-align: center; font-size: 1.1em; margin-bottom: 15px;"></p>
@@ -561,6 +702,7 @@ select {
     <select id="startWeek"></select>
     <label for="endWeek" id="labelEndWeek">Which week do you want to finish by?</label>
     <select id="endWeek"></select>
+    <div class="print-section-title" id="printTitleSkipWeeks">Planning Period &amp; Skipped Weeks</div>
     <div id="crossYearBox" style="background:#e8f0fe;border:1px solid #b0c4de;border-radius:8px;padding:10px 12px;margin-top:12px;">
       <div style="display:flex;align-items:center;">
         <input type="checkbox" id="crossYearToggle" style="transform:scale(1.2);margin-right:10px;">
@@ -621,6 +763,7 @@ select {
       <p id="customSkipCount" style="font-size:0.75em;color:#999;text-align:center;margin:4px 0 0;display:none;"></p>
     </div>
     <div class="de-box">
+      <div class="print-section-title" id="printTitleDE">Dual Enrollment</div>
       <div class="de-toggle">
         <input type="checkbox" id="deToggle">
         <label for="deToggle" id="labelDeToggle">I have a dual-enrollment class</label>
@@ -707,6 +850,7 @@ select {
       </div>
     </div>
     <div class="op-box">
+      <div class="print-section-title" id="printTitleOP">Outside Program</div>
       <div class="de-toggle">
         <input type="checkbox" id="opToggle">
         <label for="opToggle" id="labelOpToggle">I will be attending an outside program</label>
@@ -795,7 +939,10 @@ select {
     <!-- Auto-calculate: no button needed -->
   </div>
   <div class="print-page-2">
-    <div class="output" id="result"></div>
+    <div class="result-section">
+      <div class="print-section-title" id="printTitleResult">Credit Plan Summary</div>
+      <div class="output" id="result"></div>
+    </div>
     <div class="plan-buttons" id="planButtons" style="display: none;">
       <button id="smartPlanBtn" onclick="generateSmartPlan()" style="background:#2e7d32;color:#fff;font-size:1.15em;padding:14px 24px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;width:100%;">Click to Generate My Plan</button>
     </div>
@@ -3504,6 +3651,13 @@ function displayCurrentDateAndWeek() {
   const weekEl = document.getElementById("currentWeek");
   if (dateEl) dateEl.textContent = formattedDate;
   if (weekEl) weekEl.textContent = label;
+
+  // Populate the FERPA-safe repeating print footer's date (no PII).
+  const footerDateEl = document.getElementById("printFooterDate");
+  if (footerDateEl) {
+    const shortOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    footerDateEl.textContent = today.toLocaleDateString(isSpanish ? "es-ES" : "en-US", shortOptions);
+  }
 }
 
 // =====================================================
@@ -3635,6 +3789,27 @@ function applyTranslations() {
   if (gpDesc) gpDesc.textContent = isSpanish ? translations.gpDescriptionES : translations.gpDescriptionEN;
   const gpHintEl = document.getElementById('gpHint');
   if (gpHintEl) gpHintEl.textContent = isSpanish ? "Cambiar herramienta" : "Switch tool";
+
+  // --- Print packet strings (FERPA-safe; never capture student data) ---
+  const printTipEl = document.getElementById('printTipNote');
+  if (printTipEl) printTipEl.innerHTML = isSpanish
+    ? 'Consejo: Para páginas numeradas, active &ldquo;Encabezados y pies de página&rdquo; en el diálogo de impresión de su navegador.'
+    : 'Tip: For numbered pages, turn on &ldquo;Headers and footers&rdquo; in your browser&rsquo;s print dialog.';
+  const printFooterTextEl = document.getElementById('printRunningFooterText');
+  if (printFooterTextEl) printFooterTextEl.textContent = isSpanish
+    ? 'Paquete del Plan de Graduación — impreso '
+    : 'Graduation Plan Packet — printed ';
+  const printNameLblEl = document.getElementById('printNameLabel');
+  if (printNameLblEl) printNameLblEl.textContent = isSpanish ? 'Nombre del estudiante:' : 'Student name:';
+  const printTitleSkipEl = document.getElementById('printTitleSkipWeeks');
+  if (printTitleSkipEl) printTitleSkipEl.innerHTML = isSpanish ? 'Período de Planificación y Semanas Omitidas' : 'Planning Period &amp; Skipped Weeks';
+  const printTitleDeEl = document.getElementById('printTitleDE');
+  if (printTitleDeEl) printTitleDeEl.textContent = isSpanish ? 'Doble Inscripción' : 'Dual Enrollment';
+  const printTitleOpEl = document.getElementById('printTitleOP');
+  if (printTitleOpEl) printTitleOpEl.textContent = isSpanish ? 'Programa Externo' : 'Outside Program';
+  const printTitleResultEl = document.getElementById('printTitleResult');
+  if (printTitleResultEl) printTitleResultEl.textContent = isSpanish ? 'Resumen del Plan de Créditos' : 'Credit Plan Summary';
+
   populateGpFreshmanDropdown();
   calcGradPlan();
 }
