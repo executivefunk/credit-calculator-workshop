@@ -1109,8 +1109,8 @@ const T = {
   plus_week_of:[" + 1 week of {n}"," + 1 semana de {n}"],
   planD_desc:["3/week for 8 weeks unlocks a 4-credit/week max. For students in a hurry — with support.","3/semana por 8 semanas desbloquea un máximo de 4/semana. Para estudiantes con prisa — con apoyo."],
   planD_detail:["3/wk × 8 weeks, then {x} week(s) of 4{rem} — {t} weeks total","3/sem × 8 semanas, luego {x} semana(s) de 4{rem} — {t} semanas en total"],
-  email_summary:["📧 Email summary to my teacher","📧 Enviar resumen a mi maestro"],
-  copied:["Copied! Paste it anywhere.","¡Copiado! Pégalo donde quieras."],
+  share_sum_pdf:["📤 Send my summary (PDF)","📤 Enviar mi resumen (PDF)"],
+  dl_sum_pdf:["📄 Download my summary (PDF)","📄 Descargar mi resumen (PDF)"],
   tracker_back:["← All plans","← Todos los planes"],
   target:["Target","Meta"],
   planned:["Planned","Planeado"],
@@ -1119,7 +1119,6 @@ const T = {
   skip:["Skip","Descanso"],
   reset_plan:["↺ Suggested plan","↺ Plan sugerido"],
   clear_all:["Clear all","Borrar todo"],
-  email_plan:["📧 Email this plan to my teacher","📧 Enviar este plan a mi maestro"],
   dl_pdf:["📄 Download my plan (PDF)","📄 Descargar mi plan (PDF)"],
   share_pdf:["📤 Send my plan (PDF)","📤 Enviar mi plan (PDF)"],
   pdf_working:["Building your PDF…","Creando tu PDF…"],
@@ -1127,18 +1126,8 @@ const T = {
   pdf_share_done:["✅ Sent!","✅ ¡Enviado!"],
   pdf_fail:["Couldn't build the PDF on this device — use Print instead.","No se pudo crear el PDF en este dispositivo — usa Imprimir."],
   print_plan:["🖨️ Print","🖨️ Imprimir"],
-  email_subject:["My Credit Plan — {p}","Mi Plan de Créditos — {p}"],
-  email_hi:["Hi! Here is my weekly credit plan.","¡Hola! Aquí está mi plan semanal de créditos."],
-  eb_date:["Date","Fecha"],
-  eb_plan:["Plan","Plan"],
-  eb_credits:["Credits needed","Créditos necesarios"],
-  eb_weeks:["Weeks in plan","Semanas del plan"],
   eb_avg:["Average pace","Ritmo promedio"],
   eb_finish:["Finish by","Terminar para"],
-  eb_breaks:["Breaks","Descansos"],
-  eb_weekly:["WEEK-BY-WEEK","SEMANA POR SEMANA"],
-  eb_total:["Total planned","Total planeado"],
-  eb_made:["Made with the Weekly Credit Calculator","Hecho con la Calculadora de Créditos Semanales"],
   invalid:["Please check your numbers — something doesn't add up yet.","Revisa tus números — algo no cuadra todavía."],
   out_of_range:["⚠️ Dates out of range","⚠️ Fechas fuera de rango"],
   gp_select:["-- Select --","-- Seleccionar --"],
@@ -2068,7 +2057,7 @@ function renderResults(){
   });
   html+='</div>'
     +'<div class="card no-print">'
-    +'<button class="bigbtn" onclick="emailSummary()">'+t("email_summary")+'</button>'
+    +'<button class="bigbtn" id="sumPdfBtn" onclick="sendSummaryPdf()">'+t(canSharePdf()?"share_sum_pdf":"dl_sum_pdf")+'</button>'
     +'<p class="note center" style="margin-top:12px;">'+t("disclaimer")+'</p>'
     +'</div>';
   area.innerHTML=html;
@@ -2195,7 +2184,6 @@ function renderTracker(dp,keepVals){
     +'<div class="card no-print">'
     +(canSharePdf()?'<button class="bigbtn" id="sharePdfBtn" onclick="sharePlanPdf()">'+t("share_pdf")+'</button>':'')
     +'<button class="'+(canSharePdf()?'ghostbtn':'bigbtn')+'" id="dlPdfBtn" onclick="downloadPlanPdf()">'+t("dl_pdf")+'</button>'
-    +'<button class="ghostbtn" onclick="emailPlan()">'+t("email_plan")+'</button>'
     +'<button class="ghostbtn" onclick="window.print()">'+t("print_plan")+'</button>'
     +'<p class="note center" style="margin-top:12px;">'+t("disclaimer")+'</p>'
     +'</div>';
@@ -2363,6 +2351,86 @@ function hideToastNow(){
   if(el)el.style.opacity="0";
   if(toastTimer){clearTimeout(toastTimer);toastTimer=null;}
 }
+
+/* =====================================================================
+   SUMMARY PDF — captures the "Here's your pace" results page (pace gauge,
+   stats, notes, and the plan options) as a letter-size PDF.
+   ===================================================================== */
+function summaryPdfName(){
+  const d=new Date();
+  const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  return (LANG==="es"?"Resumen-de-Creditos-":"Credit-Summary-")+iso+".pdf";
+}
+async function buildSummaryPdfDoc(){
+  const src=document.getElementById("resultsArea");
+  const cards=[...src.children].filter(c=>c.classList.contains("card")&&!c.classList.contains("no-print"));
+  if(!cards.length)throw new Error("no summary");
+  /* clone the content cards into an off-screen, fixed-width wrapper so the
+     capture is identical on every device */
+  const wrap=document.createElement("div");
+  wrap.style.cssText="position:absolute;left:-12000px;top:0;width:620px;background:#fff;";
+  cards.forEach(card=>{
+    const cl=card.cloneNode(true);
+    cl.style.margin="0 0 16px";cl.style.boxShadow="none";cl.style.border="1px solid #d3dce8";
+    /* html2canvas serializes SVG without document stylesheets, so the gauge
+       must carry its styles inline on the clone */
+    const svgs=cl.querySelectorAll("svg");
+    svgs.forEach(sv=>sv.setAttribute("style","transform:rotate(-90deg)"));
+    const oc=card.querySelectorAll("svg circle"), cc=cl.querySelectorAll("svg circle");
+    oc.forEach((c,i)=>{
+      if(!cc[i])return;
+      const cs=getComputedStyle(c);
+      cc[i].setAttribute("fill","none");
+      cc[i].setAttribute("stroke",cs.stroke);
+      cc[i].setAttribute("stroke-width",parseFloat(cs.strokeWidth)||14);
+      cc[i].setAttribute("stroke-linecap",cs.strokeLinecap||"butt");
+      if(cs.strokeDasharray&&cs.strokeDasharray!=="none")cc[i].setAttribute("stroke-dasharray",cs.strokeDasharray);
+      if(cs.strokeDashoffset)cc[i].setAttribute("stroke-dashoffset",cs.strokeDashoffset);
+    });
+    wrap.appendChild(cl);
+  });
+  document.body.appendChild(wrap);
+  try{
+    const pdf=new jspdf.jsPDF({unit:"in",format:"letter",orientation:"portrait"});
+    const M=0.45, availH=11-M-0.7;
+    const footer=()=>{pdf.setFontSize(8);pdf.setTextColor(136,136,136);pdf.text(t("pp_footer")+todayStr(),4.25,10.72,{align:"center"});};
+    footer();
+    let y=M, pageHasContent=false;
+    for(const cl of wrap.children){
+      const cv=await html2canvas(cl,{scale:2,backgroundColor:"#ffffff",logging:false});
+      let w=5.6, h=cv.height/cv.width*w;      // phone-like column, centered
+      if(h>availH){w=w*availH/h;h=availH;}    // a single card never spills past a page
+      if(pageHasContent&&(y+h)>(M+availH)){ pdf.addPage(); footer(); y=M; }
+      pdf.addImage(cv.toDataURL("image/jpeg",0.92),"JPEG",(8.5-w)/2,y,w,h);
+      y+=h+0.25; pageHasContent=true;
+    }
+    return pdf;
+  } finally {
+    wrap.remove();
+  }
+}
+async function sendSummaryPdf(){
+  if(pdfBusy)return;
+  const r=compute();
+  if(!r.valid){toast(t("invalid"));return;}
+  pdfBusy=true; toast(t("pdf_working"));
+  try{
+    const pdf=await buildSummaryPdfDoc();
+    const file=new File([pdf.output("blob")],summaryPdfName(),{type:"application/pdf"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file],title:t("app_title")});
+        toast(t("pdf_share_done"));
+      }catch(err){
+        if(err&&err.name==="AbortError"){ hideToastNow(); }
+        else { pdf.save(summaryPdfName()); toast(t("pdf_done")); }
+      }
+    } else {
+      pdf.save(summaryPdfName()); toast(t("pdf_done"));
+    }
+  }catch(e){ toast(t("pdf_fail")); }
+  finally{ pdfBusy=false; }
+}
 function trAdj(i,d){
   const r=TR.r;
   const planned=TR.vals.reduce((s,v)=>s+v,0);
@@ -2402,68 +2470,6 @@ function weekDatesLabel(extW){
 function todayStr(){
   const d=new Date();
   return d.toLocaleDateString(LANG==="es"?"es-ES":"en-US",{year:"numeric",month:"long",day:"numeric"});
-}
-function buildSummaryText(){
-  const r=compute(); if(!r.valid)return"";
-  const L=[];
-  L.push(t("app_title")+" — "+todayStr());
-  L.push("");
-  L.push(t("eb_credits")+": "+r.totalCredits+((r.deSub+r.opSub)>0?" ("+tf("minus_extras",{n:r.deSub+r.opSub,c:r.C})+")":""));
-  L.push(t("eb_weeks")+": "+r.W+" ("+t("eb_breaks")+": "+r.breaksCount+")");
-  L.push(t("eb_avg")+": "+fmtAvg(r.avg)+" "+t("credits_wk"));
-  L.push(t("eb_finish")+": "+weekDatesLabel(r.endWeek)+" ("+t("week")+" "+extWeekNum(r.endWeek)+")");
-  L.push("");
-  ["A","B","C"].forEach(dp=>{
-    const p=r.plans[PLAN_MAP[dp]];
-    L.push("Plan "+dp+" ("+t(PLAN_META[dp].nameKey)+"): "+planDetail(dp,r).replace(/<[^>]*>/g,"")+(p.available?"":" — "+t("no_fit")));
-  });
-  L.push("");
-  L.push(t("eb_made"));
-  return L.join("\n");
-}
-function buildPlanText(){
-  if(!TR)return buildSummaryText();
-  const r=TR.r,dp=TR.dp;
-  const L=[];
-  L.push(t("app_title")+" — "+todayStr());
-  L.push(t("eb_plan")+": Plan "+dp+" · "+t(PLAN_META[dp].nameKey)+(dp==="D"?" ("+t("planD_approval")+")":""));
-  L.push(t("eb_credits")+": "+r.totalCredits+((r.deSub+r.opSub)>0?" ("+tf("minus_extras",{n:r.deSub+r.opSub,c:r.C})+")":""));
-  L.push(t("eb_avg")+": "+fmtAvg(r.avg)+" "+t("credits_wk"));
-  L.push(t("eb_finish")+": "+weekDatesLabel(r.endWeek)+" ("+t("week")+" "+extWeekNum(r.endWeek)+")");
-  L.push("");
-  L.push(t("eb_weekly")+":");
-  let yearMarked=false;
-  r.weekList.forEach((w,i)=>{
-    if(S.crossYear&&!w.isCurrentYear&&!yearMarked){L.push("--- "+NY.yearLabel+" ---");yearMarked=true;}
-    const[core]=splitLabel(extWeekLabel(w.week));
-    const v=TR.vals[i];
-    let tag="";
-    if(w.hardSkip)tag=" ["+t("skip")+"]";
-    else if(w.inOP1||w.inOP2)tag=" [OP]";
-    else if(w.inDE1||w.inDE2)tag=" [DE]";
-    L.push(t("wk")+" "+extWeekNum(w.week)+" ("+core+"): "+(w.hardSkip?"—":v)+tag);
-  });
-  cushionWeeks(r).forEach(cw=>{
-    const[core]=splitLabel(extWeekLabel(cw));
-    L.push(t("wk")+" "+cw+" ("+core+"): 0 ["+t("buffer_week").replace("🛟 ","")+"]");
-  });
-  L.push("");
-  L.push(t("eb_total")+": "+TR.vals.reduce((s,v)=>s+v,0)+" / "+r.C);
-  L.push("");
-  L.push(t("eb_made"));
-  return L.join("\n");
-}
-function emailSummary(){
-  const subj=tf("email_subject",{p:t("app_title")});
-  openMail(subj,t("email_hi")+"\n\n"+buildSummaryText());
-}
-function emailPlan(){
-  const dp=TR?TR.dp:"";
-  const subj=tf("email_subject",{p:"Plan "+dp+" ("+t(PLAN_META[dp].nameKey)+")"});
-  openMail(subj,t("email_hi")+"\n\n"+buildPlanText());
-}
-function openMail(subject,body){
-  location.href="mailto:?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
 }
 let toastTimer=null;
 function toast(msg){
