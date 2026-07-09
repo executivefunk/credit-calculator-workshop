@@ -2557,12 +2557,20 @@ function compute(){
     if(plans[et].available&&hasDeConflict(et)){plans[et].available=false;plans[et].deConflict=true;}
   });
   const allDisabled=["A","B","C","D"].every(et=>!plans[et].available);
+  /* Breaks are counted as EVENTS for display, not calendar weeks: Winter
+     Break spans two weeks (26–27) but is ONE break — Thanksgiving and
+     Spring are one week each. The week math above is untouched (winter
+     still removes two weeks from the plan); only the shown count merges
+     the winter pair. Program weeks are never breaks, and a holiday that
+     falls inside a program range counts as a program week. */
+  const breakWeekNums=weekList.filter(x=>(x.hardSkip&&!(x.inOP1||x.inOP2))||x.softSkip).map(x=>x.week);
+  let breaksCount=breakWeekNums.length;
+  if(breakWeekNums.includes(26)&&breakWeekNums.includes(27))breaksCount--;                             // current-year winter pair
+  if(breakWeekNums.includes(totalCurrent+26)&&breakWeekNums.includes(totalCurrent+27))breaksCount--;   // next-year winter pair
   return {valid:true,totalCredits,C,W,avg,deSub,opSub,riskKey,riskCls,bufferKey,
     weekList,plans,baseDistribution,uniqueSkips,opSkipWeeks,
     de1,de2,op1,op2,allDisabled,startWeek,endWeek,
-    /* counts mirror what the student sees: program weeks are never breaks,
-       and a holiday that falls inside a program range counts as a program week */
-    breaksCount:weekList.filter(x=>(x.hardSkip&&!(x.inOP1||x.inOP2))||x.softSkip).length,
+    breaksCount:breaksCount,
     opWeeksCount:weekList.filter(x=>x.inOP1||x.inOP2).length};
 }
 </script>
