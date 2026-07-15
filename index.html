@@ -25,7 +25,8 @@ input,select{font-family:inherit;font-size:1rem;}
 #appHeader{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);
   backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
   display:flex;align-items:center;gap:8px;padding:10px 14px;}
-#appHeader .brand{font-weight:800;font-size:1.02rem;display:flex;align-items:center;gap:7px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#appHeader .brand{font-weight:800;font-size:1.02rem;display:flex;align-items:center;gap:7px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;user-select:none;}
+#appHeader .brand:hover #brandTxt{color:var(--accent);}
 .hbtn{border:1px solid var(--line);background:#fff;border-radius:99px;
   padding:7px 13px;font-size:.86rem;font-weight:700;cursor:pointer;color:var(--ink);
   transition:background .15s;}
@@ -91,9 +92,14 @@ input[type="number"]{-moz-appearance:textfield;}
 .credit-react{text-align:center;font-size:.95rem;color:var(--muted);min-height:1.5em;font-weight:600;}
 /* chips */
 .chiprow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
-.chip{padding:10px 14px;border-radius:99px;border:2px solid var(--line);background:#fff;
-  font-size:.92rem;font-weight:700;cursor:pointer;transition:all .15s;}
+.chip{padding:12px 18px;border-radius:99px;border:2px solid var(--line);background:#fff;
+  font-size:.95rem;font-weight:700;cursor:pointer;transition:all .15s;text-align:left;
+  display:inline-flex;align-items:center;gap:8px;flex:1 1 auto;min-width:45%;}
 .chip.sel{border-color:var(--accent);background:var(--accent);color:#fff;}
+.chip .chip-mark{font-weight:800;}
+.chip{flex-wrap:wrap;}
+.chip .chip-sub{display:block;width:100%;font-size:.78rem;font-weight:500;color:var(--muted);margin-top:2px;padding-left:26px;}
+.chip.sel .chip-sub{color:rgba(255,255,255,.88);}
 .pillrow{display:flex;gap:8px;margin-bottom:10px;}
 .pill{flex:1;padding:9px;border-radius:10px;border:2px solid var(--line);background:#fff;
   font-size:.9rem;font-weight:700;cursor:pointer;text-align:center;}
@@ -144,7 +150,18 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
 #paceChip{font-size:.82rem;font-weight:800;border-radius:99px;padding:8px 12px;background:var(--accent-soft);
   color:var(--accent-dark);white-space:nowrap;display:none;}
 #paceChip.show{display:block;}
-#backBtn{padding:13px 18px;border-radius:12px;border:2px solid var(--line);background:#fff;font-weight:800;cursor:pointer;}
+#floatBack{position:fixed;left:calc(50% - 358px);top:50%;transform:translateY(-50%);z-index:45;
+  width:42px;height:80px;border-radius:16px;border:2px solid var(--line);
+  background:rgba(255,255,255,.95);font-size:1.7rem;font-weight:800;color:var(--ink);
+  cursor:pointer;display:none;align-items:center;justify-content:center;
+  box-shadow:var(--shadow);transition:border-color .15s,color .15s;}
+#floatBack:hover{border-color:var(--accent);color:var(--accent);}
+#backBtnM{padding:13px 18px;border-radius:12px;border:2px solid var(--line);background:#fff;font-weight:800;cursor:pointer;display:none;}
+/* Chromebook / desktop: chevron beside the card. Mobile: classic bottom back button. */
+@media (max-width:760px){
+  #floatBack{display:none !important;}
+  #backBtnM{display:block;}
+}
 #nextBtn{flex:1;padding:13px;border:none;border-radius:12px;background:var(--accent);color:#fff;
   font-size:1.02rem;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(79,70,229,.35);}
 #nextBtn:disabled{background:#c7cbe8;box-shadow:none;cursor:not-allowed;}
@@ -183,6 +200,12 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
 .pc-desc{font-size:.9rem;color:var(--muted);margin-top:6px;}
 .pc-detail{font-size:.86rem;margin-top:6px;font-weight:600;}
 .pc-reason{font-size:.8rem;color:var(--bad);margin-top:5px;font-weight:600;}
+.segrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;}
+.segchip{border-radius:8px;padding:4px 10px;font-size:.8rem;font-weight:600;border:1.5px solid;white-space:nowrap;}
+.seg3{background:#fff7ed;border-color:#fb923c;color:#9a3412;}
+.seg2{background:#eff6ff;border-color:#60a5fa;color:#1e40af;}
+.seg1{background:#ecfdf5;border-color:#34d399;color:#065f46;}
+.segarrow{color:var(--muted);font-weight:800;}
 .pc-go{position:absolute;right:12px;bottom:12px;font-size:1.1rem;color:var(--accent);}
 /* ============ TRACKER ============ */
 .badgerow{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px;}
@@ -239,13 +262,6 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
   color:#fff;font-weight:800;cursor:pointer;font-size:.86rem;line-height:1.3;}
 .gp-usebtn:hover{background:var(--accent-dark);}
 .gya-card{border:2px solid #f87171;background:var(--bad-soft);border-radius:14px;padding:14px;margin-top:14px;font-size:.9rem;}
-/* ============ IDLE MODAL ============ */
-#idleModal{position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.6);display:none;
-  align-items:center;justify-content:center;padding:20px;}
-#idleModal.show{display:flex;}
-.idlebox{background:#fff;border-radius:18px;padding:26px;max-width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);}
-.idlebox .ib-emoji{font-size:2.6rem;}
-#idleCount{font-size:2rem;font-weight:800;color:var(--bad);margin:6px 0;}
 /* dedicated DE / OP highlight colors */
 .hl-de1{background:#fef3c7 !important;border-color:#f59e0b !important;color:#78350f;}
 .hl-de2{background:#ccfbf1 !important;border-color:#14b8a6 !important;color:#134e4a;}
@@ -266,7 +282,7 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
 /* ============ PRINT ============ */
 @media print{
   body{background:#fff;}
-  #appHeader,#wiznav,#idleModal,.no-print{display:none !important;}
+  #appHeader,#wiznav,.no-print{display:none !important;}
   .card{box-shadow:none;border:1px solid #ccc;}
   .screen{display:none;}
   .screen.active{display:block;}
@@ -275,7 +291,7 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
 /* ============ PRINTABLE PLANNER SHEET ============ */
 #printPlanner{display:none;}
 @media print{
-  body.print-planner .screen,body.print-planner #appHeader,body.print-planner #wiznav,body.print-planner #idleModal{display:none !important;}
+  body.print-planner .screen,body.print-planner #appHeader,body.print-planner #wiznav{display:none !important;}
   body.print-planner #printPlanner{display:block !important;}
   @page{size:letter portrait;margin:0.45in 0.45in 0.7in 0.45in;}
 }
@@ -313,7 +329,9 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
   tr.pp-buffer td{background:#e8f0fe !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#1e40af;border-top:2px solid #60a5fa !important;border-bottom:2px solid #60a5fa !important;}
   tr.pp-year td{background:#dce6f8 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-weight:800;text-align:center;color:#1a3a6b;}
   .pslot{display:inline-flex;align-items:flex-end;gap:6px;width:46%;margin:4px 2% 4px 0;vertical-align:bottom;}
-  .pbox{width:15px;height:15px;border:1.5px solid #333;border-radius:3px;flex-shrink:0;}
+  .pbox{width:15px;height:15px;border:1.5px solid #333;border-radius:3px;flex-shrink:0;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:7.5pt;font-weight:700;color:#4b5563;line-height:1;}
   .pslot.bonus .pbox{border-style:dashed;border-color:#999;}
   .pslot.bonus .pline{border-bottom-style:dashed;border-bottom-color:#aaa;}
   .pline{flex:1;border-bottom:1px solid #555;height:20px;min-width:0.7in;}
@@ -334,17 +352,8 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
 </head>
 <body>
 <canvas id="confettiCanvas"></canvas>
-<div id="idleModal" role="alertdialog">
-  <div class="idlebox">
-    <div class="ib-emoji">👋</div>
-    <h2 id="idleTitle">Still there?</h2>
-    <p id="idleMsg" class="sub">To protect your info on a shared device, this will reset soon.</p>
-    <div id="idleCount">60</div>
-    <button class="bigbtn" id="idleStayBtn" onclick="stayActive()">I'm still here</button>
-  </div>
-</div>
 <header id="appHeader" style="display:none;">
-  <div class="brand"><span>🎓</span><span id="brandTxt">Credit Planner</span></div>
+  <div class="brand" onclick="goHome()" role="button" tabindex="0" title="Home" onkeydown="if(event.key==='Enter')goHome()"><span>🎓</span><span id="brandTxt">Credit Planner</span></div>
   <button class="hbtn" id="homeBtn" onclick="goHome()">🏠</button>
   <button class="hbtn" id="langBtn" onclick="toggleLang()">Español</button>
 </header>
@@ -362,6 +371,12 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
       <button id="langEN" class="sel" onclick="setLang('en')">English</button>
       <button id="langES" onclick="setLang('es')">Español</button>
     </div>
+  </div>
+  <!-- After a 30-min timeout the session locks; work can still be downloaded -->
+  <div class="card" id="lockDownloads" style="display:none;max-width:380px;margin:20px auto;">
+    <p class="sub center" id="lockDlMsg"></p>
+    <button class="bigbtn" id="dlSummaryBtn" onclick="downloadSnapshot('sum')"></button>
+    <button class="ghostbtn" id="dlPlanBtn" onclick="downloadSnapshot('plan')"></button>
   </div>
   <!-- Admin panel (revealed with admin code) -->
   <div class="card" id="adminPanel" style="display:none;max-width:380px;margin:20px auto;">
@@ -428,7 +443,6 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
         <label class="flabel" data-i18n="s2_start_label">Starting from week</label>
         <select class="wsel" id="startWeekSel" onchange="onStartWeekChange()"></select>
       </div>
-      <button class="hbtn" style="margin-top:8px;" id="changeStartBtn" onclick="toggleStartChange()" data-i18n="s2_change_start">Change start week</button>
       <label class="flabel" data-i18n="s2_finish_label">Finish by</label>
       <div class="chiprow" id="finishChips"></div>
       <div id="customEndWrap" style="display:none;">
@@ -459,6 +473,7 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
       <div id="breaksList"></div>
       <div id="customSkipList"></div>
       <button class="addbtn" onclick="addCustomSkip(false)" data-i18n="s3_add_custom">+ Add another week off (trip, work, life...)</button>
+      <div class="errbox" id="breakImpact" style="display:none;"></div>
       <div id="nyBreaksWrap" style="display:none;">
         <div class="yeardivider" id="nyBreaksTitle"></div>
         <div id="nyBreaksList"></div>
@@ -521,11 +536,12 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
 
 <div id="wiznav">
   <div class="wn-inner">
-    <button id="backBtn" onclick="wizBack()">←</button>
+    <button id="backBtnM" onclick="wizBack()" aria-label="Back">←</button>
     <span id="paceChip"></span>
     <button id="nextBtn" onclick="wizNext()">Next →</button>
   </div>
 </div>
+<button id="floatBack" class="no-print" onclick="wizBack()" title="Back" aria-label="Back">‹</button>
 <script>
 /* ===== Inlined vendor libraries (MIT) for offline PDF generation =====
    jsPDF 4.2.1 + html2canvas 1.4.1 — kept inline so the tool stays a
@@ -1976,7 +1992,6 @@ const CODE_SECRET = "WCC-2026-KEY"; // change this to re-key ALL student codes
 const CODE_PERIOD_MIN = 10;         // student code rotates every N minutes
 const CODE_GRACE_SEC = 120;         // old code still accepted this many seconds after rollover
 const IDLE_MINUTES = 30;            // inactivity timeout (wipes data, returns to lock screen)
-const IDLE_WARN_SEC = 60;           // warning countdown before the wipe
 const TOTAL_GRAD_CREDITS = 230;
 
 /* =====================================================================
@@ -2031,7 +2046,7 @@ const T = {
   s2_finish_label:["Finish by","Terminar para"],
   s2_cross_title:["My plan continues into next school year (summer school / longer plan)","Mi plan continúa el próximo año escolar (escuela de verano / plan más largo)"],
   s2_cross_finish:["Finish by (next school year)","Terminar para (próximo año escolar)"],
-  s3_title:["Breaks — because rest matters 😌","Descansos — porque descansar importa 😌"],
+  s3_title:["Weeks you plan to skip 😌","Semanas que planeas omitir 😌"],
   s3_sub:["If your pace allows it, we've already switched on the breaks you can afford. Flip any off if you plan to work through them.","Si tu ritmo lo permite, ya activamos los descansos que puedes tomar. Desactiva los que planeas trabajar."],
   s3_add_custom:["+ Add another week off (trip, work, life...)","+ Agregar otra semana libre (viaje, trabajo...)"],
   s3_add_custom_ny:["+ Add a week off (next year)","+ Agregar una semana libre (próximo año)"],
@@ -2045,17 +2060,20 @@ const T = {
   gp_remaining:["Credits I still have remaining:","Créditos que aún me quedan:"],
   next:["Next →","Siguiente →"],
   see_plan:["See my plan 🎉","Ver mi plan 🎉"],
-  idle_title:["Still there?","¿Sigues ahí?"],
-  idle_msg:["To protect your info on a shared device, this will reset soon.","Para proteger tu información en un dispositivo compartido, esto se reiniciará pronto."],
-  idle_stay:["I'm still here","Aquí sigo"],
+  locked_expired:["⏱️ Your session has expired. To use the tool again, come to another workshop.","⏱️ Tu sesión ha expirado. Para usar la herramienta otra vez, ven a otro taller."],
+  locked_dl:["You can still download what you worked on:","Aún puedes descargar lo que trabajaste:"],
   week:["Week","Semana"],
   wk:["Wk","Sem"],
   credits:["credits","créditos"],
   credits_wk:["credits / week","créditos / semana"],
   this_week:["this week","esta semana"],
+  next_week:["next week","próxima semana"],
+  change:["Change","Cambiar"],
+  good_to_know:["🎓 Good to know: The graduation ceremony deadline only decides whether you can walk in the ceremony. Your true graduation is the day you finish all your credits.","🎓 Bueno saber: La fecha límite de la ceremonia solo decide si puedes participar en la ceremonia. Tu verdadera graduación es el día que termines todos tus créditos."],
   start_info:["Starting from:","Comenzando desde:"],
   grad_deadline:["🎓 Graduation ceremony deadline","🎓 Fecha límite de la ceremonia de graduación"],
   week_before_grad:["Two weeks before graduation ceremony deadline","Dos semanas antes de la fecha límite de la ceremonia"],
+  week_before_why:["Life happens — a little cushion protects your spot at the ceremony.","La vida pasa — un pequeño margen protege tu lugar en la ceremonia."],
   op_weeks_stat:["program weeks","semanas de programa"],
   pp_op_row:["🏕️ PROGRAM WEEK — credits earned at your program","🏕️ SEMANA DE PROGRAMA — créditos ganados en tu programa"],
   buffer_week:["🛟 Safety cushion","🛟 Margen de seguridad"],
@@ -2087,13 +2105,13 @@ const T = {
   remove:["✕ Remove","✕ Eliminar"],
   results_title:["Here's your pace","Este es tu ritmo"],
   weeks_stat:["weeks","semanas"],
-  breaks_stat:["breaks","descansos"],
+  breaks_stat:["skipped weeks","semanas omitidas"],
   credits_stat:["credits","créditos"],
   risk_low:["✅ You're on track! Aim for 2 credits a week to stay steady and finish on time.","✅ ¡Vas bien! Intenta entregar 2 créditos por semana para mantenerte al día y terminar a tiempo."],
   risk_med:["⚠️ You'll need a bit more than 2 each week. Try turning in 3 credits weekly to get ahead and lower your load.","⚠️ Necesitarás un poco más de 2 por semana. Intenta entregar 3 créditos semanales para avanzar y reducir tu carga."],
   risk_medhigh:["⚠️ You're getting close to the weekly limit of 3. Turn in 3 a week now to lower your load and avoid burnout later.","⚠️ Estás cerca del límite semanal de 3. Entrega 3 por semana ahora para reducir tu carga y evitar agotarte."],
   risk_high:["⚠️ You're very close to the weekly limit of 3. Turn in 3 credits a week now to lower your load.","⚠️ Muy cerca del límite semanal de 3. Entrega 3 por semana para bajar tu carga."],
-  risk_max:["🚨 This pace needs 3+ credits every single week with no breaks. Most students need extra support for that. Talk with your teacher to build backup options.","🚨 Este ritmo requiere 3+ créditos cada semana sin descansos. La mayoría necesita apoyo extra. Habla con tu maestro para crear un plan con respaldo."],
+  risk_max:["🚨 This pace needs 3+ credits every single week with no breaks. Talk with your teacher to build backup options.","🚨 Este ritmo requiere 3+ créditos cada semana sin descansos. Habla con tu maestro para crear un plan con respaldo."],
   buffer44:["⚠️ Heads up: you're finishing right at the deadline. Aim to finish 2 weeks before the deadline to give yourself a safety cushion.","⚠️ Aviso: terminas justo en la fecha límite. Intenta terminar 2 semanas antes de la fecha límite para darte un margen de seguridad."],
   buffer45:["⚠️ Heads up: you're finishing really close to the deadline. Aim to finish 2 weeks before the deadline to give yourself a safety cushion.","⚠️ Aviso: terminas muy cerca de la fecha límite. Intenta terminar 2 semanas antes de la fecha límite para darte un margen de seguridad."],
   bufferAfter46:["⚠️ Week 46 is the last week to turn in credits and walk in the graduation ceremony. You picked a later week — check with your teacher that your plan still works.","⚠️ La Semana 46 es la última para entregar créditos y participar en la ceremonia. Elegiste una semana posterior — confirma con tu maestro que tu plan aún funcione."],
@@ -2109,16 +2127,18 @@ const T = {
   no_fit:["WON'T FIT","NO CABE"],
   de_subtract:["{n} credits subtracted from your total ({r})","{n} créditos restados de tu total ({r})"],
   op_subtract:["{n} credits earned externally — those weeks locked at 0 ({r})","{n} créditos ganados externamente — esas semanas quedan en 0 ({r})"],
+  no_plans_fit:["🚨 Neither pace reaches your goal in the time you have. Talk with your teacher to build a custom plan together.","🚨 Ningún ritmo alcanza tu meta en el tiempo disponible. Habla con tu maestro para crear un plan personalizado."],
   de_conflict_all:["⚠️ Your college class lands in weeks where you'd have no credits left to earn. Adjust the class dates or plan range.","⚠️ Tu clase de colegio cae en semanas sin créditos restantes. Ajusta las fechas de la clase o tu rango del plan."],
   de_conflict_one:["This plan would leave 0 credits during your college class weeks.","Este plan dejaría 0 créditos durante tu clase de colegio."],
   minus_extras:["minus {n} from extras = {c} to earn weekly","menos {n} de extras = {c} a ganar semanalmente"],
   exceeds:["Needs {z} more week(s) than you have","Necesita {z} semana(s) más de las que tienes"],
   planA_desc:["The gentlest pace. Mostly 1–2 credits a week, using all your weeks.","El ritmo más suave. Normalmente 1–2 créditos por semana, usando todas tus semanas."],
   planA_detail_light:["1 credit/week for {n} weeks — you even have {z} spare week(s)","1 crédito/semana por {n} semanas — te sobran {z} semana(s)"],
-  planA_detail_mix:["Mix of 1s and 2s: up to {n} week(s) can be 1-credit weeks","Mezcla de 1 y 2: hasta {n} semana(s) pueden ser de 1 crédito"],
+  planA_detail_mix:["2 credits most weeks — and up to {n} lighter week(s) where 1 credit is enough","2 créditos la mayoría de las semanas — y hasta {n} semana(s) más ligera(s) donde 1 crédito es suficiente"],
   planB_desc:["The classic. 2 credits every week, steady as it goes.","El clásico. 2 créditos cada semana, con constancia."],
   planB_detail:["2 credits/week for {n} weeks","2 créditos/semana por {n} semanas"],
-  planB_detail_mix:["Needs a boost: {segs}","Necesita un impulso: {segs}"],
+  planB_boost_label:["Needs a boost to fit:","Necesita un impulso para caber:"],
+  seg_chip:["<b>{n}/wk</b> × {c} week(s)","<b>{n}/sem</b> × {c} semana(s)"],
   segs_of:["{c} week(s) of {n}","{c} semana(s) de {n}"],
   planC_desc:["Finish early and buy yourself breathing room.","Termina antes y gana un margen de respiro."],
   planC_detail:["3 credits/week for {n} weeks{rem} — done in {t} weeks","3 créditos/semana por {n} semanas{rem} — listo en {t} semanas"],
@@ -2193,13 +2213,38 @@ const T = {
   pp_finishby:["Finish by:","Terminar para:"],
   pp_legend1:["Each ☐ box = 1 credit. Check it off when you turn it in, and write the class on the line (English, Math, Science...).","Cada casilla ☐ = 1 crédito. Márcala cuando lo entregues y escribe la clase en la línea (Inglés, Matemáticas, Ciencias...)."],
   pp_legend2:["When every box in a row is checked, that week is DONE. ✔","Cuando todas las casillas de una fila estén marcadas, esa semana está LISTA. ✔"],
-  pp_legend3:["Dashed boxes = extra room if you get ahead (up to 4 in a week). Green rows = planned breaks: no credits required — but any credits you turn in still count.","Casillas punteadas = espacio extra si te adelantas (hasta 4 por semana). Filas verdes = descansos planeados: no se requieren créditos — pero los créditos que entregues sí cuentan."],
+  pp_legend3:["Dashed boxes = extra room if you get ahead (up to 4 in a week). Green rows = weeks you plan to skip: no credits required — but any credits you turn in still count.","Casillas punteadas = espacio extra si te adelantas (hasta 4 por semana). Filas verdes = semanas que planeas omitir: no se requieren créditos — pero los créditos que entregues sí cuentan."],
   pp_legend4:["🏫 = college class weeks · 🏕️ = outside program (credits earned there, nothing due here).","🏫 = semanas de clase de colegio · 🏕️ = programa externo (créditos ganados allá, nada que entregar aquí)."],
   pp_dates:["Dates","Fechas"],
   pp_credits_col:["Credits","Créditos"],
   pp_check_col:["Check off your credits","Marca tus créditos"],
   pp_break:["Break","Descanso"],
-  pp_break_row:["🌴 BREAK WEEK — credits optional","🌴 SEMANA DE DESCANSO — créditos opcionales"],
+  pp_break_row:["🌴 SCHOOL BREAK — credits optional","🌴 DESCANSO ESCOLAR — créditos opcionales"],
+  pp_custom_row:["🙋 PLANNED WEEK OFF — credits optional","🙋 SEMANA LIBRE PLANEADA — créditos opcionales"],
+  limited_word:["Limited","Limitado"],
+  tg_name:["THANKSGIVING WEEK","SEMANA DE ACCIÓN DE GRACIAS"],
+  spring_name:["SPRING WEEK","SEMANA DE PRIMAVERA"],
+  limited_suffix:["LIMITED SCHEDULE, credits optional","HORARIO LIMITADO, créditos opcionales"],
+  winter_name:["WINTER BREAK","VACACIONES DE INVIERNO"],
+  tg_tc:["Thanksgiving week","Semana de Acción de Gracias"],
+  winter_tc:["Winter break","Vacaciones de invierno"],
+  spring_tc:["Spring week","Semana de primavera"],
+  limited_short:["Limited schedule","Horario limitado"],
+  closed_short:["School closed","Escuela cerrada"],
+  week_off:["Planned week off","Semana libre planeada"],
+  credits_opt:["Credits optional","Créditos opcionales"],
+  closed_suffix:["SCHOOL CLOSED, credits optional","ESCUELA CERRADA, créditos opcionales"],
+  limited_sub:["School partially open — limited appointment times","Escuela parcialmente abierta — citas limitadas"],
+  tg_lc:["Thanksgiving week","la semana de Acción de Gracias"],
+  winter_lc:["Winter break","las vacaciones de invierno"],
+  spring_lc:["Spring week","la semana de primavera"],
+  and_word:["and","y"],
+  bi_intro:["⚠️ Taking {names} means your credits won't all fit by your finish line — you'd finish about {n} week(s) later","⚠️ Tomar {names} hará que tus créditos no quepan antes de tu meta — terminarías unas {n} semana(s) después"],
+  bi_past46:["— that's past the graduation ceremony credit deadline.","— eso es después de la fecha límite de créditos para la ceremonia de graduación."],
+  bi_cushion_ok:["— you'd lose your safety cushion, but you could still make the graduation ceremony credit deadline.","— perderías tu margen de seguridad, pero aún podrías llegar a la fecha límite de la ceremonia de graduación."],
+  bi_year_end:["— that's past the end of the school year.","— eso es después del fin del año escolar."],
+  bi_generic:["— later than the finish week you picked.","— después de la semana final que elegiste."],
+  bi_choice:["It's your call — rest matters too. If you keep the break, talk with your teacher about adjusting your plan.","Tú decides — descansar también importa. Si mantienes el descanso, habla con tu maestro para ajustar tu plan."],
   pp_mix:["Week mix:","Mezcla de semanas:"],
   crossyear_auto:["Next-year planning was turned on for you (see Step 2).","Se activó la planificación del próximo año (mira el Paso 2)."],
   pp_total:["Total planned","Total planeado"],
@@ -2217,9 +2262,7 @@ function applyI18n(){
   document.getElementById("langEN").classList.toggle("sel",LANG==="en");
   document.getElementById("langES").classList.toggle("sel",LANG==="es");
   document.getElementById("nextBtn").textContent = (curStep===4)?t("see_plan"):t("next");
-  document.getElementById("idleTitle").textContent=t("idle_title");
-  document.getElementById("idleMsg").textContent=t("idle_msg");
-  document.getElementById("idleStayBtn").textContent=t("idle_stay");
+  renderLockDownloads();
 }
 
 /* =====================================================================
@@ -2320,7 +2363,14 @@ function detectCurrentWeek(sy){
 }
 function defaultStartWeek(){
   const cw=detectCurrentWeek(SY);
-  if(cw!==null){ return (cw===1&&SY.week1Partial)?2:cw; }
+  if(cw!==null){
+    /* if today isn't Monday, the plan starts next week (same rule as the
+       graduation planner) — this week is already partly gone */
+    const isMonday=new Date().getDay()===1;
+    let wk=isMonday?cw:Math.min(cw+1,SY.totalWeeks);
+    if(wk===1&&SY.week1Partial)wk=2;
+    return wk;
+  }
   return SY.week1Partial?2:1;
 }
 
@@ -2472,13 +2522,25 @@ function compute(){
     if(gpFY&&activeStartYear()>=gpFY+3)bufferKey="bufferAfter46";
   }
   /* ---- week list (for plans + tracker) ---- */
+  /* classify skipped weeks: winter = full school break; Thanksgiving &
+     spring = limited schedule (school partially open); rest = personal */
+  const limitedSet=new Set(), fullBreakSet=new Set();
+  if(S.skipTG)limitedSet.add(22);
+  if(S.skipSpring)limitedSet.add(41);
+  if(S.skipWinter){fullBreakSet.add(26);fullBreakSet.add(27);}
+  if(S.crossYear){
+    if(S.nySkipTG)limitedSet.add(totalCurrent+22);
+    if(S.nySkipSpring)limitedSet.add(totalCurrent+41);
+    if(S.nySkipWinter){fullBreakSet.add(totalCurrent+26);fullBreakSet.add(totalCurrent+27);}
+  }
   const weekList=[];
   for(let w=startWeek;w<=endWeek;w++){
     const isCur=w<=totalCurrent; const aw=isCur?w:w-totalCurrent;
     const softSkip=(w===1&&w1Applicable()&&S.skipW1)||(S.crossYear&&w===totalCurrent+1&&nyW1Applicable()&&S.nySkipW1);
     const inOP1=isWeekInX(op1,w,isCur,aw), inOP2=isWeekInX(op2,w,isCur,aw);
     const hardSkip=softSkip?false:(uniqueSkips.includes(w)||inOP1||inOP2);
-    weekList.push({week:w,actualWeek:aw,isCurrentYear:isCur,hardSkip,softSkip,
+    const skipKind=hardSkip?((inOP1||inOP2)?"op":limitedSet.has(w)?"limited":fullBreakSet.has(w)?"break":"custom"):null;
+    weekList.push({week:w,actualWeek:aw,isCurrentYear:isCur,hardSkip,softSkip,skipKind,
       inDE1:isWeekInX(de1,w,isCur,aw),inDE2:isWeekInX(de2,w,isCur,aw),inOP1,inOP2});
   }
   /* ---- plan math (preserved formulas, engine letters = original) ---- */
@@ -2584,6 +2646,8 @@ function showScreen(id){
   document.getElementById(id).classList.add("active");
   curScreen=id;
   document.getElementById("wiznav").classList.toggle("show",id==="scr-wizard");
+  const fb=document.getElementById("floatBack");
+  if(fb)fb.style.display=(id==="scr-wizard")?"flex":"none";
   document.body.classList.toggle("print-planner",id==="scr-tracker");
   window.scrollTo({top:0});
 }
@@ -2601,7 +2665,6 @@ function gotoStep(n){
     const dn=+d.getAttribute("data-step");
     d.classList.toggle("done",dn<n); d.classList.toggle("cur",dn===n);
   });
-  document.getElementById("backBtn").style.visibility=n===1?"hidden":"visible";
   document.getElementById("nextBtn").style.display=n===5?"none":"block";
   document.getElementById("nextBtn").textContent=(n===4)?t("see_plan"):t("next");
   if(n===2)renderTimelineUI();
@@ -2628,7 +2691,9 @@ function updatePaceChip(){
 /* =====================================================================
    LOCK SCREEN / ADMIN / IDLE
    ===================================================================== */
-let adminInt=null, idleTimer=null, warnInt=null, unlocked=false;
+let adminInt=null, idleTimer=null, unlocked=false;
+let lockSnapshot={sumUrl:null,sumName:null,planUrl:null,planName:null};
+let lockExpired=false;
 function tryUnlock(){
   const inp=document.getElementById("codeInput");
   const v=(inp.value||"").trim().toUpperCase();
@@ -2657,6 +2722,9 @@ function updateAdmin(){
 function adminEnterApp(){ hideAdmin(); unlock(); }
 function unlock(){
   unlocked=true;
+  lockExpired=false;
+  clearLockSnapshot();
+  renderLockDownloads();
   /* Refresh date-derived data on every unlock. A device can sit at the
      lock screen for hours or days (labs, Chromebook carts), so the school
      year and "current week" computed at page load may be stale by now —
@@ -2671,7 +2739,6 @@ function unlock(){
 }
 function wipeToLock(){
   unlocked=false;
-  hideIdleModal();
   if(idleTimer){clearTimeout(idleTimer);idleTimer=null;}
   S=defaultState(); rebuildYearData();
   S.startWeek=defaultStartWeek();
@@ -2685,31 +2752,71 @@ function wipeToLock(){
   hideAdmin();
   document.getElementById("codeInput").value="";
   document.getElementById("lockErr").textContent="";
+  renderLockDownloads();
   showScreen("scr-lock");
+}
+async function lockNow(){
+  /* build PDFs of the student's work BEFORE wiping, so they can still be
+     downloaded from the lock screen */
+  const snap={sumUrl:null,sumName:null,planUrl:null,planName:null};
+  try{
+    const r=compute();
+    if(r&&r.valid){
+      try{
+        renderResults();
+        const pdf=await buildSummaryPdfDoc();
+        snap.sumUrl=URL.createObjectURL(pdf.output("blob"));
+        snap.sumName=summaryPdfName();
+      }catch(e){}
+      if(typeof TR!=="undefined"&&TR){
+        try{
+          const pdf2=await buildPlanPdfDoc();
+          snap.planUrl=URL.createObjectURL(pdf2.output("blob"));
+          snap.planName=planPdfName();
+        }catch(e){}
+      }
+    }
+  }catch(e){}
+  clearLockSnapshot();
+  lockSnapshot=snap;
+  lockExpired=true;
+  TR=null;
+  wipeToLock();
+}
+function clearLockSnapshot(){
+  if(lockSnapshot.sumUrl)URL.revokeObjectURL(lockSnapshot.sumUrl);
+  if(lockSnapshot.planUrl)URL.revokeObjectURL(lockSnapshot.planUrl);
+  lockSnapshot={sumUrl:null,sumName:null,planUrl:null,planName:null};
+}
+function renderLockDownloads(){
+  const box=document.getElementById("lockDownloads");
+  if(!box)return;
+  const any=lockSnapshot.sumUrl||lockSnapshot.planUrl;
+  box.style.display=lockExpired?"block":"none";
+  if(!lockExpired)return;
+  document.getElementById("lockDlMsg").textContent=t("locked_expired")+(any?" "+t("locked_dl"):"");
+  const sb=document.getElementById("dlSummaryBtn"), pb=document.getElementById("dlPlanBtn");
+  sb.style.display=lockSnapshot.sumUrl?"block":"none";
+  sb.textContent=t("dl_sum_pdf");
+  pb.style.display=lockSnapshot.planUrl?"block":"none";
+  pb.textContent=t("dl_pdf");
+}
+function downloadSnapshot(which){
+  const url=which==="sum"?lockSnapshot.sumUrl:lockSnapshot.planUrl;
+  const name=which==="sum"?lockSnapshot.sumName:lockSnapshot.planName;
+  if(!url)return;
+  const a=document.createElement("a");
+  a.href=url; a.download=name||"credit-plan.pdf";
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
 }
 function resetIdle(){
   if(!unlocked)return;
   if(idleTimer)clearTimeout(idleTimer);
-  idleTimer=setTimeout(showIdleWarn,Math.max(1,IDLE_MINUTES*60-IDLE_WARN_SEC)*1000);
+  idleTimer=setTimeout(lockNow,IDLE_MINUTES*60*1000);
 }
-function showIdleWarn(){
-  if(!unlocked)return;
-  let left=IDLE_WARN_SEC;
-  document.getElementById("idleCount").textContent=left;
-  document.getElementById("idleModal").classList.add("show");
-  if(warnInt)clearInterval(warnInt);
-  warnInt=setInterval(()=>{
-    left--; document.getElementById("idleCount").textContent=left;
-    if(left<=0){clearInterval(warnInt);warnInt=null;wipeToLock();}
-  },1000);
-}
-function hideIdleModal(){
-  document.getElementById("idleModal").classList.remove("show");
-  if(warnInt){clearInterval(warnInt);warnInt=null;}
-}
-function stayActive(){ hideIdleModal(); resetIdle(); }
 ["pointerdown","keydown","touchstart","input"].forEach(ev=>{
-  document.addEventListener(ev,()=>{ if(unlocked&&!document.getElementById("idleModal").classList.contains("show")) resetIdle(); },{passive:true});
+  document.addEventListener(ev,()=>{ if(unlocked)resetIdle(); },{passive:true});
 });
 
 /* =====================================================================
@@ -2752,14 +2859,19 @@ function renderTimelineUI(){
   /* start info */
   const cw=detectCurrentWeek(SY);
   const info=document.getElementById("startWeekInfo");
-  info.innerHTML="📍 <b>"+t("start_info")+"</b> "+t("week")+" "+S.startWeek
-    +(cw===S.startWeek?" <span style='color:var(--good);font-weight:700;'>("+t("this_week")+")</span>":"")
-    +"<br><span style='color:var(--muted);font-size:.82rem;'>"+extWeekLabel(S.startWeek)+"</span>";
+  let whenTag="";
+  if(cw!==null&&S.startWeek===cw)whenTag=" <span style='color:var(--good);font-weight:700;'>("+t("this_week")+")</span>";
+  else if(cw!==null&&S.startWeek===cw+1)whenTag=" <span style='color:var(--good);font-weight:700;'>("+t("next_week")+")</span>";
+  const[startCore]=splitLabel(extWeekLabel(S.startWeek));
+  info.innerHTML="<span style='display:flex;align-items:center;gap:6px;flex-wrap:wrap;'>"
+    +"<span style='flex:1;min-width:0;'>📍 <b>"+t("start_info")+"</b> "+t("week")+" "+S.startWeek+whenTag
+    +" <span style='color:var(--muted);'>· "+startCore+"</span></span>"
+    +"<a style='color:var(--accent);font-weight:700;font-size:.82rem;cursor:pointer;flex-shrink:0;' onclick='toggleStartChange()'>"+t("change")+"</a></span>";
   document.getElementById("startWeekSel").value=String(S.startWeek);
   /* finish chips */
   const chips=[
     {w:46,label:t("grad_deadline")},
-    {w:44,label:t("week_before_grad")},
+    {w:44,label:t("week_before_grad"),sub:t("week_before_why")},
     {w:SY.totalWeeks,label:t("year_end")},
     {w:"custom",label:t("custom")}
   ];
@@ -2768,8 +2880,10 @@ function renderTimelineUI(){
   row.innerHTML="";
   chips.forEach(c=>{
     const b=document.createElement("button");
-    b.className="chip"; b.textContent=c.label;
+    b.className="chip";
     const sel=(c.w==="custom")?!isPreset:(S.endWeek===c.w&&isPreset);
+    b.innerHTML='<span class="chip-mark">'+(sel?"✓":"○")+'</span> '+c.label
+      +(c.sub?'<span class="chip-sub">'+c.sub+'</span>':'');
     if(sel)b.classList.add("sel");
     if(S.crossYear){b.style.opacity=.45;b.style.cursor="not-allowed";}
     else b.onclick=()=>{ if(c.w==="custom"){document.getElementById("customEndWrap").style.display="block";}
@@ -2779,11 +2893,12 @@ function renderTimelineUI(){
   });
   document.getElementById("customEndWrap").style.display=(!isPreset&&!S.crossYear)?"block":"none";
   document.getElementById("endWeekSel").value=String(S.endWeek);
-  /* buffer hint */
+  /* good-to-know note (the deadline-cushion warning still appears on the
+     results page; this step stays encouraging) */
   const hint=document.getElementById("bufferHint");
-  if(!S.crossYear&&S.endWeek===46){hint.style.display="block";hint.textContent=t("buffer44");}
-  else if(!S.crossYear&&S.endWeek===45){hint.style.display="block";hint.textContent=t("buffer45");}
-  else hint.style.display="none";
+  hint.className="subnote";
+  hint.style.display="block";
+  hint.textContent=t("good_to_know");
   /* cross year */
   document.getElementById("crossYearChk").checked=S.crossYear;
   document.getElementById("crossYearCard").classList.toggle("open",S.crossYear);
@@ -2834,9 +2949,9 @@ function renderBreaks(){
   let html="";
   if(w1Applicable())
     html+=breakRow("⏱️",t("brk_w1"),S.skipW1,false,"tgW1",SY.week1SchoolDays+(LANG==="es"?" días de clase":" school days"));
-  if(inR(22,false))html+=breakRow("🦃",t("brk_tg").replace("🦃 ",""),S.skipTG,S.skipTG&&!S.userToggled.tg,"tgTG");
+  if(inR(22,false))html+=breakRow("🦃",t("brk_tg").replace("🦃 ",""),S.skipTG,S.skipTG&&!S.userToggled.tg,"tgTG",t("limited_sub"));
   if(inR(26,false)&&inR(27,false))html+=breakRow("❄️",t("brk_winter").replace("❄️ ",""),S.skipWinter,S.skipWinter&&!S.userToggled.winter,"tgWinter");
-  if(inR(41,false))html+=breakRow("🌸",t("brk_spring").replace("🌸 ",""),S.skipSpring,S.skipSpring&&!S.userToggled.spring,"tgSpring");
+  if(inR(41,false))html+=breakRow("🌸",t("brk_spring").replace("🌸 ",""),S.skipSpring,S.skipSpring&&!S.userToggled.spring,"tgSpring",t("limited_sub"));
   document.getElementById("breaksList").innerHTML=html||'<p class="note">'+(LANG==="es"?"No hay descansos estándar dentro de tu rango.":"No standard breaks fall inside your plan range.")+'</p>';
   renderCustomSkips(false);
   /* next year */
@@ -2846,13 +2961,43 @@ function renderBreaks(){
     document.getElementById("nyBreaksTitle").textContent=tf("ny_breaks",{y:NY.yearLabel});
     let nh="";
     if(nyW1Applicable())nh+=breakRow("⏱️",t("brk_w1"),S.nySkipW1,false,"tgNyW1",NY.week1SchoolDays+(LANG==="es"?" días de clase":" school days"));
-    if(inR(22,true))nh+=breakRow("🦃",t("brk_tg").replace("🦃 ",""),S.nySkipTG,S.nySkipTG&&!S.userToggled.nyTg,"tgNyTG");
+    if(inR(22,true))nh+=breakRow("🦃",t("brk_tg").replace("🦃 ",""),S.nySkipTG,S.nySkipTG&&!S.userToggled.nyTg,"tgNyTG",t("limited_sub"));
     if(inR(26,true)&&inR(27,true))nh+=breakRow("❄️",t("brk_winter").replace("❄️ ",""),S.nySkipWinter,S.nySkipWinter&&!S.userToggled.nyWinter,"tgNyWinter");
-    if(inR(41,true))nh+=breakRow("🌸",t("brk_spring").replace("🌸 ",""),S.nySkipSpring,S.nySkipSpring&&!S.userToggled.nySpring,"tgNySpring");
+    if(inR(41,true))nh+=breakRow("🌸",t("brk_spring").replace("🌸 ",""),S.nySkipSpring,S.nySkipSpring&&!S.userToggled.nySpring,"tgNySpring",t("limited_sub"));
     document.getElementById("nyBreaksList").innerHTML=nh;
     renderCustomSkips(true);
   } else wrap.style.display="none";
+  renderBreakImpact();
   updatePaceChip();
+}
+function renderBreakImpact(){
+  /* red alert when the breaks that are switched ON push the finish past the
+     student's chosen finish line (at the sustainable 2-credit/week pace) */
+  const box=document.getElementById("breakImpact");
+  if(!box)return;
+  box.style.display="none";
+  if(!(S.credits>0))return;
+  const names=[];
+  if(S.skipTG||(S.crossYear&&S.nySkipTG))names.push(t("tg_lc"));
+  if(S.skipWinter||(S.crossYear&&S.nySkipWinter))names.push(t("winter_lc"));
+  if(S.skipSpring||(S.crossYear&&S.nySkipSpring))names.push(t("spring_lc"));
+  if(!names.length)return;
+  const r=compute();
+  if(!r||!r.valid)return;
+  const deficit=Math.ceil(r.C/2)-r.W;
+  if(deficit<=0)return;
+  const endWeek=effectiveEndWeek();
+  let suffix;
+  if(S.crossYear)suffix=t("bi_generic");
+  else if(S.endWeek===46)suffix=t("bi_past46");
+  else if(S.endWeek===44||S.endWeek===45)suffix=(S.endWeek+deficit<=46)?t("bi_cushion_ok"):t("bi_past46");
+  else if(S.endWeek===SY.totalWeeks)suffix=t("bi_year_end");
+  else suffix=t("bi_generic");
+  const nameStr=names.length===1?names[0]
+    :names.slice(0,-1).join(", ")+" "+t("and_word")+" "+names[names.length-1];
+  box.innerHTML=tf("bi_intro",{names:nameStr,n:deficit})+" "+suffix
+    +'<br><span style="font-weight:400;">'+t("bi_choice")+'</span>';
+  box.style.display="block";
 }
 function flipBreak(field,togKey){
   S[field]=!S[field];
@@ -2999,11 +3144,11 @@ function planDetail(dp,r){
   if(e==="A"){
     if(!p.exceed)return tf("planB_detail",{n:p.need});
     if(p.segments){
-      const seg=[];
-      if(p.segments.w3>0)seg.push(tf("segs_of",{c:p.segments.w3,n:3}));
-      if(p.segments.w2>0)seg.push(tf("segs_of",{c:p.segments.w2,n:2}));
-      if(p.segments.w1>0)seg.push(tf("segs_of",{c:p.segments.w1,n:1}));
-      return tf("planB_detail_mix",{segs:seg.join(" + ")});
+      const chips=[];
+      if(p.segments.w3>0)chips.push('<span class="segchip seg3">'+tf("seg_chip",{n:3,c:p.segments.w3})+'</span>');
+      if(p.segments.w2>0)chips.push('<span class="segchip seg2">'+tf("seg_chip",{n:2,c:p.segments.w2})+'</span>');
+      if(p.segments.w1>0)chips.push('<span class="segchip seg1">'+tf("seg_chip",{n:1,c:p.segments.w1})+'</span>');
+      return t("planB_boost_label")+' <div class="segrow">'+chips.join('<span class="segarrow"> → </span>')+'</div>';
     }
     return tf("exceeds",{z:p.exceed});
   }
@@ -3061,9 +3206,10 @@ function renderResults(){
     +'<div class="riskband risk-'+r.riskCls+'">'+t(r.riskKey)+'</div>'
     +(r.bufferKey?'<div class="warnbox">'+t(r.bufferKey)+'</div>':"")
     +(r.allDisabled&&(r.de1.active||r.de2.active)?'<div class="errbox">'+t("de_conflict_all")+'</div>':"")
+    +(!r.plans.C.available&&!r.plans.A.available&&!(r.de1.active||r.de2.active)?'<div class="errbox">'+t("no_plans_fit")+'</div>':"")
     +'</div>';
   html+='<div class="card"><h2>'+t("pick_plan")+'</h2><p class="sub">'+t("pick_plan_sub")+'</p>';
-  ["A","B","C"].forEach(dp=>{
+  ["A","B"].forEach(dp=>{
     const e=PLAN_MAP[dp],p=r.plans[e],m=PLAN_META[dp];
     const[bc,bt]=planBadge(dp,r);
     const dis=!p.available;
@@ -3162,7 +3308,11 @@ function renderTracker(dp,keepVals){
     if(w.inDE2)tags+='<span class="wktag wt-de2">🏫 '+(esc(r.de2.name)||"DE 2")+'</span>';
     if(w.inOP1)tags+='<span class="wktag wt-op">🏕️ '+(esc(r.op1.name)||"OP 1")+'</span>';
     if(w.inOP2)tags+='<span class="wktag wt-op">🏕️ '+(esc(r.op2.name)||"OP 2")+'</span>';
-    if(w.hardSkip&&!(w.inOP1||w.inOP2))tags+='<span class="wktag wt-skip">🌴 '+t("skip")+'</span>';
+    if(w.hardSkip&&!(w.inOP1||w.inOP2)){
+      if(w.skipKind==="limited")tags+='<span class="wktag wt-skip">'+(w.actualWeek===22?"🦃 "+t("tg_tc"):"🌸 "+t("spring_tc"))+' — '+t("limited_short")+'</span>';
+      else if(w.skipKind==="custom")tags+='<span class="wktag wt-skip">🙋 '+t("week_off")+'</span>';
+      else tags+='<span class="wktag wt-skip">❄️ '+t("winter_tc")+' — '+t("closed_short")+'</span>';
+    }
     if(w.softSkip)tags+='<span class="wktag wt-skip">'+(LANG==="es"?"semana corta":"short week")+'</span>';
     const v=TR.vals[i];
     const isOpWk=w.inOP1||w.inOP2;
@@ -3173,7 +3323,7 @@ function renderTracker(dp,keepVals){
       +'<div class="wk-ctrl">'
       +(w.hardSkip?(isOpWk
           ?'<em style="font-size:.8rem;color:#b91c1c;font-weight:700;font-style:normal;">🏕️</em>'
-          :'<em style="font-size:.8rem;color:#059669;font-weight:700;font-style:normal;">🌴 '+t("skip")+'</em>')
+          :'<em style="font-size:.72rem;color:#059669;font-weight:700;font-style:normal;max-width:92px;text-align:right;line-height:1.25;display:inline-block;">'+t("credits_opt")+'</em>')
         :'<button class="mini" onclick="trAdj('+i+',-1)"'+(v<=0?" disabled":"")+'>−</button>'
         +'<span class="wk-val'+(v===0?" zero":"")+'">'+v+'</span>'
         +'<button class="mini" onclick="trAdj('+i+',1)"'+(v>=TR.maxPerWeek||left<=0?" disabled":"")+'>+</button>')
@@ -3241,8 +3391,12 @@ function buildPrintPlanner(){
            student who works through a break can still check credits off */
         let bslots="";
         for(let k=0;k<4;k++)bslots+='<span class="pslot bonus"><span class="pbox"></span><span class="pline"></span></span>';
+        const skipLabel=w.skipKind==="limited"
+          ?(w.actualWeek===22?"🦃 "+t("tg_name"):"🌸 "+t("spring_name"))+" — "+t("limited_suffix")
+          :w.skipKind==="break"?("❄️ "+t("winter_name")+" — "+t("closed_suffix"))
+          :w.skipKind==="custom"?t("pp_custom_row"):t("pp_break_row");
         push('<tr class="pp-skip"><td class="pp-wk">'+extWeekNum(w.week)+'</td>'
-          +'<td class="pp-datecell">'+core+tags+(note?'<em>'+note+'</em>':"")+'<em>'+t("pp_break_row")+'</em></td>'
+          +'<td class="pp-datecell">'+core+tags+(note?'<em>'+note+'</em>':"")+'<em>'+skipLabel+'</em></td>'
           +'<td class="pp-credits">0</td><td class="pp-slots">'+bslots+'</td></tr>',1.4);
       }
       return;
@@ -3250,7 +3404,7 @@ function buildPrintPlanner(){
     const v=TR.vals[i]; total+=v;
     let slots="";
     for(let k=0;k<4;k++){
-      slots+='<span class="pslot'+(k>=v?" bonus":"")+'"><span class="pbox"></span><span class="pline"></span></span>';
+      slots+='<span class="pslot'+(k>=v?" bonus":"")+'"><span class="pbox">'+(k<v?(k+1):"")+'</span><span class="pline"></span></span>';
     }
     push('<tr><td class="pp-wk">'+extWeekNum(w.week)+'</td>'+dateCell
       +'<td class="pp-credits">'+v+'</td><td class="pp-slots">'+slots+'</td></tr>',(tags||note)?1.25:1);
