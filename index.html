@@ -4086,10 +4086,7 @@ const ASSESS_KEY="wcc_assessment_v1";
    Form → paste your form's PRE-FILLED link (see instructions there);
    then copy the printed config into these lines to bake it in.
    --------------------------------------------------------------- */
-const GFORM_BAKED={
-  formId:"",            // e.g. "1FAIpQLSc...linkId from the form URL"
-  fields:{sid:"",phase:"",grade:"",lang:"",q1:"",q2:"",q3:"",q4:"",q5:"",helpful:""}  // e.g. sid:"entry.1234567"
-};
+const GFORM_BAKED={"formId":"1FAIpQLScPs2sJniiedGZWZINMENXwjXlCkoLW6weC4EbSDAxUnnqR2Q","fields":{"sid":"entry.1651829273","phase":"entry.510706584","grade":"entry.1773917561","lang":"entry.1426559880","q1":"entry.1429236220","q2":"entry.1529227603","q3":"entry.1237065122","q4":"entry.1359372442","q5":"entry.444283361","helpful":"entry.265268604"}};
 const GFORM_LS_KEY="wcc_gform_cfg";
 function gformConfig(){
   try{ const o=JSON.parse(localStorage.getItem(GFORM_LS_KEY)); if(o&&o.formId)return o; }catch(e){}
