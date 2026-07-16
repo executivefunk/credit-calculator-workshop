@@ -3606,7 +3606,8 @@ async function buildSummaryPdfDoc(){
   }
 }
 async function downloadSummaryPdf(){
-  if(requirePost(downloadSummaryPdf))return;
+  /* summary is ungated — the post-assessment fires at the PLAN stage,
+     after the student has seen their actual week-by-week plan */
   if(pdfBusy)return;
   const r=compute();
   if(!r.valid){toast(t("invalid"));return;}
@@ -3619,7 +3620,6 @@ async function downloadSummaryPdf(){
   finally{ pdfBusy=false; }
 }
 async function shareSummaryPdf(){
-  if(requirePost(shareSummaryPdf))return;
   if(pdfBusy)return;
   const r=compute();
   if(!r.valid){toast(t("invalid"));return;}
