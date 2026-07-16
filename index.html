@@ -378,6 +378,8 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
     <button class="bigbtn" id="dlSummaryBtn" onclick="downloadSnapshot('sum')"></button>
     <button class="ghostbtn" id="dlPlanBtn" onclick="downloadSnapshot('plan')"></button>
   </div>
+  <!-- Workshop data panel (staff only) -->
+  <div class="card" id="dataPanel" style="display:none;max-width:560px;margin:20px auto;"></div>
   <!-- Admin panel (revealed with admin code) -->
   <div class="card" id="adminPanel" style="display:none;max-width:380px;margin:20px auto;">
     <h2 style="text-align:center;">🔑 <span data-i18n="admin_title">Staff Panel</span></h2>
@@ -386,6 +388,7 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
     <p class="center note"><span data-i18n="admin_next_in">New code in</span> <b id="adminCountdown">--:--</b></p>
     <div class="subnote center"><span data-i18n="admin_next_code">Next code:</span> <b id="adminNextCode">----</b></div>
     <button class="ghostbtn" onclick="adminEnterApp()" data-i18n="admin_enter">Enter the tool</button>
+    <button class="ghostbtn" onclick="showDataPanel()">📊 Workshop data</button>
     <button class="ghostbtn" onclick="hideAdmin()" data-i18n="admin_close">Close panel</button>
   </div>
 </section>
@@ -532,6 +535,10 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
   <div id="gpResult"></div>
 </section>
 <div id="printPlanner"></div>
+<!-- ==================== ANONYMOUS PRE/POST ASSESSMENT ==================== -->
+<section class="screen" id="scr-assess">
+  <div id="assessArea"></div>
+</section>
 </main>
 
 <div id="wiznav">
@@ -2202,7 +2209,7 @@ const T = {
   gp_gya_credits:["GYA credits","créditos GYA"],
   gp_gya_award:["🏕️ Credits awarded upon completing the GYA program.","🏕️ Créditos otorgados al completar el programa GYA."],
   cr_wk:["cr/week","cr/sem"],
-  disclaimer:["This tool helps you plan, but always double-check your credit totals with your teacher or counselor.","Esta herramienta te ayuda a planear, pero siempre verifica tus créditos con tu maestro o consejero."],
+  disclaimer:["This is not an official school document. It helps you plan, but always double-check your credit totals with your teacher or counselor.","Este no es un documento oficial de la escuela. Te ayuda a planear, pero siempre verifica tus créditos con tu maestro o consejero."],
   react_small:["Nice — that's totally doable! 💪","¡Bien — eso es muy alcanzable! 💪"],
   react_mid:["Solid goal. Let's map it out. 🎯","Buena meta. Vamos a planearla. 🎯"],
   react_big:["Big goal — we'll break it into small weekly wins. 🧗","Meta grande — la dividiremos en pequeños logros semanales. 🧗"],
@@ -2248,7 +2255,7 @@ const T = {
   pp_mix:["Week mix:","Mezcla de semanas:"],
   crossyear_auto:["Next-year planning was turned on for you (see Step 2).","Se activó la planificación del próximo año (mira el Paso 2)."],
   pp_total:["Total planned","Total planeado"],
-  pp_footer:["Weekly Credit Plan — printed ","Plan Semanal de Créditos — impreso "],
+  pp_footer:["NOT AN OFFICIAL SCHOOL DOCUMENT — planning tool only · printed ","NO ES UN DOCUMENTO OFICIAL DE LA ESCUELA — solo una herramienta de planificación · impreso "],
   spare:["You have {n} spare week(s) — life happens, you're covered.","Te sobran {n} semana(s) — si algo pasa, estás cubierto."],
 };
 function t(key){ const e=T[key]; return e ? (LANG==="es"?e[1]:e[0]) : key; }
@@ -2651,7 +2658,11 @@ function showScreen(id){
   document.body.classList.toggle("print-planner",id==="scr-tracker");
   window.scrollTo({top:0});
 }
-function goHome(){ showScreen("scr-mode"); }
+function goHome(){
+  /* the pre-assessment must be finished before the tool opens */
+  if(ASSESS&&!ASSESS.preDone){ renderAssess("pre"); showScreen("scr-assess"); return; }
+  showScreen("scr-mode");
+}
 function startWizard(){
   showScreen("scr-wizard");
   gotoStep(1);
@@ -2719,7 +2730,7 @@ function updateAdmin(){
   const s=secsLeftInBucket();
   document.getElementById("adminCountdown").textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
 }
-function adminEnterApp(){ hideAdmin(); unlock(); }
+function adminEnterApp(){ nextUnlockIsStaff=true; hideAdmin(); unlock(); }
 function unlock(){
   unlocked=true;
   lockExpired=false;
@@ -2734,10 +2745,14 @@ function unlock(){
   S.startWeek=defaultStartWeek();
   syncWizardInputs();
   document.getElementById("appHeader").style.display="flex";
-  showScreen("scr-mode");
+  syncPending();
+  startAssessSession();
+  if(ASSESS.preDone)showScreen("scr-mode");
+  else{ renderAssess("pre"); showScreen("scr-assess"); }
   resetIdle();
 }
 function wipeToLock(){
+  ASSESS=null;
   unlocked=false;
   if(idleTimer){clearTimeout(idleTimer);idleTimer=null;}
   S=defaultState(); rebuildYearData();
@@ -3359,7 +3374,7 @@ function renderTracker(dp,keepVals){
     +'<div class="card no-print">'
     +(canSharePdf()?'<button class="bigbtn" id="sharePdfBtn" onclick="sharePlanPdf()">'+t("share_pdf")+'</button>':'')
     +'<button class="'+(canSharePdf()?'ghostbtn':'bigbtn')+'" id="dlPdfBtn" onclick="downloadPlanPdf()">'+t("dl_pdf")+'</button>'
-    +'<button class="ghostbtn" onclick="window.print()">'+t("print_plan")+'</button>'
+    +'<button class="ghostbtn" onclick="doPrint()">'+t("print_plan")+'</button>'
     +'<p class="note center" style="margin-top:12px;">'+t("disclaimer")+'</p>'
     +'</div>';
   buildPrintPlanner();
@@ -3496,6 +3511,7 @@ async function buildPlanPdfDoc(){
 }
 let pdfBusy=false;
 async function downloadPlanPdf(){
+  if(requirePost(downloadPlanPdf))return;
   if(pdfBusy||!TR)return;
   pdfBusy=true; toast(t("pdf_working"));
   try{
@@ -3506,6 +3522,7 @@ async function downloadPlanPdf(){
   finally{ pdfBusy=false; }
 }
 async function sharePlanPdf(){
+  if(requirePost(sharePlanPdf))return;
   if(pdfBusy||!TR)return;
   pdfBusy=true; toast(t("pdf_working"));
   try{
@@ -3589,6 +3606,7 @@ async function buildSummaryPdfDoc(){
   }
 }
 async function downloadSummaryPdf(){
+  if(requirePost(downloadSummaryPdf))return;
   if(pdfBusy)return;
   const r=compute();
   if(!r.valid){toast(t("invalid"));return;}
@@ -3601,6 +3619,7 @@ async function downloadSummaryPdf(){
   finally{ pdfBusy=false; }
 }
 async function shareSummaryPdf(){
+  if(requirePost(shareSummaryPdf))return;
   if(pdfBusy)return;
   const r=compute();
   if(!r.valid){toast(t("invalid"));return;}
@@ -4048,5 +4067,288 @@ document.addEventListener("DOMContentLoaded",()=>{
   setTimeout(()=>code.focus(),300);
 });
 </script>
+<script>
+"use strict";
+/* =====================================================================
+   ANONYMOUS PRE/POST ASSESSMENT
+   Aligned to ASCA Mindsets & Behaviors. No names, no PII: a random
+   session id pairs each student's pre with their post. Records persist
+   in this browser's localStorage; export CSV from the staff panel
+   (N106) after each workshop — especially on managed Chromebooks that
+   wipe on logout.
+   ===================================================================== */
+const ASSESS_KEY="wcc_assessment_v1";
+/* ---------------------------------------------------------------
+   GOOGLE FORM SYNC (optional, recommended)
+   Fill these in to send every response to one Google Form/Sheet
+   across all devices. Leave formId empty for device-only storage.
+   Easiest setup: staff panel → 📊 Workshop data → Connect Google
+   Form → paste your form's PRE-FILLED link (see instructions there);
+   then copy the printed config into these lines to bake it in.
+   --------------------------------------------------------------- */
+const GFORM_BAKED={
+  formId:"",            // e.g. "1FAIpQLSc...linkId from the form URL"
+  fields:{sid:"",phase:"",grade:"",lang:"",q1:"",q2:"",q3:"",q4:"",q5:"",helpful:""}  // e.g. sid:"entry.1234567"
+};
+const GFORM_LS_KEY="wcc_gform_cfg";
+function gformConfig(){
+  try{ const o=JSON.parse(localStorage.getItem(GFORM_LS_KEY)); if(o&&o.formId)return o; }catch(e){}
+  return GFORM_BAKED.formId?GFORM_BAKED:null;
+}
+function sendToGoogleForm(rec){
+  const cfg=gformConfig();
+  if(!cfg)return Promise.reject("no config");
+  const body=new URLSearchParams();
+  ["sid","phase","grade","lang","q1","q2","q3","q4","q5","helpful"].forEach(k=>{
+    if(cfg.fields[k])body.append(cfg.fields[k],rec[k]==null?"":String(rec[k]));
+  });
+  return fetch("https://docs.google.com/forms/d/e/"+cfg.formId+"/formResponse",
+    {method:"POST",mode:"no-cors",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:body.toString()});
+}
+let syncBusy=false;
+function syncPending(){
+  if(syncBusy||!gformConfig()||!navigator.onLine)return;
+  const recs=loadRecords();
+  const pending=recs.filter(r=>!r.synced);
+  if(!pending.length)return;
+  syncBusy=true;
+  (async()=>{
+    for(const r of pending){
+      try{ await sendToGoogleForm(r); r.synced=true; }catch(e){ break; }
+    }
+    try{localStorage.setItem(ASSESS_KEY,JSON.stringify(recs));}catch(e){}
+    syncBusy=false;
+    const dp=document.getElementById("dataPanel");
+    if(dp&&dp.style.display==="block")showDataPanel();
+  })();
+}
+const ASCA_MAP={q1:"B-LS 4 / B-SMS 6",q2:"B-LS 7 / B-SMS 3",q3:"M 2",q4:"M 2 / B-SMS 6",q5:"B-SS 3"};
+let ASSESS=null, nextUnlockIsStaff=false, pendingAfterPost=null, assessReturn=null, AANS={};
+Object.assign(T,{
+  as_pre_title:["Quick check-in (1 minute)","Chequeo rápido (1 minuto)"],
+  as_post_title:["Last step — quick check-out","Último paso — chequeo rápido"],
+  as_pre_note:["6 quick taps before you start. 100% anonymous — no names, ever.","6 respuestas rápidas antes de comenzar. 100% anónimo — sin nombres, nunca."],
+  as_post_note:["Same quick questions before your download — it helps us make this workshop better. Still 100% anonymous.","Las mismas preguntas rápidas antes de tu descarga — nos ayuda a mejorar este taller. Sigue siendo 100% anónimo."],
+  as_scale_low:["Not true for me yet","Aún no es cierto para mí"],
+  as_scale_high:["Very true for me","Muy cierto para mí"],
+  as_q1:["When I think about my credits, I know what my next step is.","Cuando pienso en mis créditos, sé cuál es mi siguiente paso."],
+  as_q2:["I have a clear plan for what to do each week.","Tengo un plan claro de qué hacer cada semana."],
+  as_q3:["I believe I can reach my graduation goal.","Creo que puedo alcanzar mi meta de graduación."],
+  as_q4:["I feel in control of my path to graduation.","Siento control sobre mi camino hacia la graduación."],
+  as_q5:["I know an adult at school I can go to if I need help.","Conozco a un adulto en la escuela con quien puedo contar si necesito ayuda."],
+  as_helpful:["This workshop helped me today.","Este taller me ayudó hoy."],
+  as_grade:["What grade are you in?","¿En qué grado estás?"],
+  as_grade_other:["Other","Otro"],
+  as_submit:["Done ✓","Listo ✓"],
+  as_thanks:["Thank you! 🙌","¡Gracias! 🙌"]
+});
+function startAssessSession(){
+  ASSESS={sid:Math.random().toString(36).slice(2,10)+Date.now().toString(36),
+    preDone:false,postDone:false,staff:nextUnlockIsStaff};
+  if(nextUnlockIsStaff){ASSESS.preDone=true;ASSESS.postDone=true;}
+  nextUnlockIsStaff=false;
+}
+function loadRecords(){ try{return JSON.parse(localStorage.getItem(ASSESS_KEY))||[];}catch(e){return[];} }
+function saveRecord(rec){
+  if(ASSESS&&ASSESS.staff)return;
+  rec.synced=false;
+  const a=loadRecords(); a.push(rec);
+  try{localStorage.setItem(ASSESS_KEY,JSON.stringify(a));}catch(e){}
+  syncPending();
+}
+function requirePost(retryFn){
+  if(!ASSESS||ASSESS.postDone)return false;
+  pendingAfterPost=retryFn;
+  assessReturn=curScreen;
+  renderAssess("post");
+  showScreen("scr-assess");
+  return true;
+}
+function doPrint(){
+  if(requirePost(doPrint))return;
+  window.print();
+}
+function renderAssess(phase){
+  AANS={};
+  const items=["q1","q2","q3","q4","q5"];
+  let html='<div class="card">'
+    +'<div class="steplabel">'+(phase==="pre"?"📝":"🏁")+' '+(LANG==="es"?"ANÓNIMO":"ANONYMOUS")+'</div>'
+    +'<h2>'+t(phase==="pre"?"as_pre_title":"as_post_title")+'</h2>'
+    +'<p class="sub">'+t(phase==="pre"?"as_pre_note":"as_post_note")+'</p>'
+    +'<div class="subnote" style="display:flex;justify-content:space-between;font-size:.78rem;">'
+    +'<span>1 = '+t("as_scale_low")+'</span><span>5 = '+t("as_scale_high")+'</span></div>';
+  items.forEach(q=>{ html+=assessItem(q,t("as_"+q)); });
+  if(phase==="post")html+=assessItem("helpful","⭐ "+t("as_helpful"));
+  if(phase==="pre"){
+    html+='<div class="as-item"><p class="as-q">'+t("as_grade")+'</p><div class="as-scale">'
+      +[9,10,11,12,"other"].map(g=>'<button class="as-btn" data-q="grade" data-v="'+g+'" onclick="asPick(this)">'
+        +(g==="other"?t("as_grade_other"):g)+'</button>').join("")+'</div></div>';
+  }
+  html+='<button class="bigbtn" id="asSubmit" disabled onclick="asSubmit(\''+phase+'\')">'+t("as_submit")+'</button>'
+    +'</div>';
+  document.getElementById("assessArea").innerHTML=html;
+}
+function assessItem(q,text){
+  return '<div class="as-item"><p class="as-q">'+text+'</p><div class="as-scale">'
+    +[1,2,3,4,5].map(v=>'<button class="as-btn" data-q="'+q+'" data-v="'+v+'" onclick="asPick(this)">'+v+'</button>').join("")
+    +'</div></div>';
+}
+function asPick(btn){
+  const q=btn.getAttribute("data-q"), v=btn.getAttribute("data-v");
+  AANS[q]=isNaN(+v)?v:+v;
+  btn.parentElement.querySelectorAll(".as-btn").forEach(b=>b.classList.remove("sel"));
+  btn.classList.add("sel");
+  const phase=document.getElementById("assessArea").innerHTML.includes(t("as_helpful"))?"post":"pre";
+  const need=["q1","q2","q3","q4","q5"].concat(phase==="post"?["helpful"]:["grade"]);
+  document.getElementById("asSubmit").disabled=!need.every(k=>AANS[k]!==undefined);
+}
+function asSubmit(phase){
+  const rec={sid:ASSESS.sid,phase:phase,ts:new Date().toISOString(),lang:LANG,
+    grade:phase==="pre"?AANS.grade:"",q1:AANS.q1,q2:AANS.q2,q3:AANS.q3,q4:AANS.q4,q5:AANS.q5,
+    helpful:phase==="post"?AANS.helpful:""};
+  saveRecord(rec);
+  toast(t("as_thanks"));
+  if(phase==="pre"){
+    ASSESS.preDone=true;
+    showScreen("scr-mode");
+  } else {
+    ASSESS.postDone=true;
+    if(assessReturn)showScreen(assessReturn);
+    const fn=pendingAfterPost; pendingAfterPost=null; assessReturn=null;
+    if(fn)setTimeout(()=>fn(),150);
+  }
+}
+/* ---------------- staff data panel ---------------- */
+function showDataPanel(){
+  const el=document.getElementById("dataPanel");
+  const recs=loadRecords();
+  const pre=recs.filter(r=>r.phase==="pre"), post=recs.filter(r=>r.phase==="post");
+  const bySid={}; pre.forEach(r=>{bySid[r.sid]=bySid[r.sid]||{};bySid[r.sid].pre=r;});
+  post.forEach(r=>{bySid[r.sid]=bySid[r.sid]||{};bySid[r.sid].post=r;});
+  const pairs=Object.values(bySid).filter(x=>x.pre&&x.post);
+  const avg=(arr,k)=>{const v=arr.map(r=>+r[k]).filter(n=>!isNaN(n));return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;};
+  const fmt=n=>n===null?"—":(Math.round(n*100)/100).toFixed(2);
+  let rows="";
+  const labels={q1:"Knows next step (anti-avoidance)",q2:"Has weekly plan",q3:"Believes can reach grad goal",q4:"Feels in control of path",q5:"Has a trusted adult to ask"};
+  ["q1","q2","q3","q4","q5"].forEach(q=>{
+    const pa=avg(pre,q),po=avg(post,q);
+    const d=(pa!==null&&po!==null)?(po-pa):null;
+    rows+='<tr><td style="text-align:left;">'+labels[q]+'<br><span style="color:var(--muted);font-size:.72rem;">ASCA '+ASCA_MAP[q]+'</span></td>'
+      +'<td>'+fmt(pa)+'</td><td>'+fmt(po)+'</td>'
+      +'<td style="font-weight:800;color:'+(d>0?"var(--good)":d<0?"var(--bad)":"var(--muted)")+';">'+(d===null?"—":(d>0?"+":"")+fmt(d))+'</td></tr>';
+  });
+  let improved="—";
+  if(pairs.length){
+    const n=pairs.filter(x=>{
+      const ps=["q1","q2","q3","q4","q5"];
+      const a=ps.reduce((s,q)=>s+(+x.pre[q]||0),0), b=ps.reduce((s,q)=>s+(+x.post[q]||0),0);
+      return b>a;
+    }).length;
+    improved=Math.round(100*n/pairs.length)+"%";
+  }
+  const grades={};
+  pre.forEach(r=>{ if(r.grade)grades[r.grade]=(grades[r.grade]||0)+1; });
+  el.innerHTML='<h2>📊 Workshop Data</h2>'
+    +'<p class="sub">Anonymous pre/post assessment · ASCA Mindsets &amp; Behaviors aligned · this device only</p>'
+    +'<div class="statrow" style="justify-content:flex-start;">'
+    +'<div class="stat"><b>'+pre.length+'</b><span>pre</span></div>'
+    +'<div class="stat"><b>'+post.length+'</b><span>post</span></div>'
+    +'<div class="stat"><b>'+pairs.length+'</b><span>matched pairs</span></div>'
+    +'<div class="stat"><b>'+improved+'</b><span>students improved</span></div>'
+    +'<div class="stat"><b>'+fmt(avg(post,"helpful"))+'</b><span>workshop rating /5</span></div>'
+    +'</div>'
+    +'<table style="width:100%;border-collapse:collapse;margin-top:12px;font-size:.85rem;text-align:center;">'
+    +'<thead><tr style="border-bottom:2px solid var(--line);"><th style="text-align:left;">Item</th><th>Pre</th><th>Post</th><th>Δ</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table>'
+    +(Object.keys(grades).length?'<p class="note" style="margin-top:10px;">By grade (pre): '+Object.keys(grades).sort().map(g=>g+"th: "+grades[g]).join(" · ").replace("otherth:","Other:")+'</p>':"")
+    +gformStatusHtml(recs)
+    +'<button class="bigbtn" onclick="exportAssessCsv()">⬇️ Export CSV ('+recs.length+' records)</button>'
+    +'<button class="ghostbtn" onclick="clearAssessData()">🗑️ Clear data on this device</button>'
+    +'<button class="ghostbtn" onclick="document.getElementById(\'dataPanel\').style.display=\'none\'">Close</button>';
+  el.style.display="block";
+}
+function gformStatusHtml(recs){
+  const cfg=gformConfig();
+  const pending=recs.filter(r=>!r.synced).length;
+  if(cfg){
+    return '<div class="subnote" style="margin-top:12px;">☁️ <b>Google Form connected.</b> '
+      +(pending?pending+' record(s) waiting to sync. <a style="color:var(--accent);font-weight:700;cursor:pointer;" onclick="syncPending();toast(\'Syncing…\')">Sync now</a>'
+        :'All records synced to your Sheet.')
+      +' <a style="color:var(--muted);cursor:pointer;" onclick="disconnectGform()">Disconnect</a></div>';
+  }
+  return '<div class="warnbox" style="margin-top:12px;">☁️ <b>Not connected to a Google Form</b> — data stays on each device. '
+    +'<a style="color:var(--accent);font-weight:700;cursor:pointer;" onclick="toggleGformSetup()">Connect Google Form…</a>'
+    +'<div id="gformSetup" style="display:none;margin-top:10px;font-size:.85rem;font-weight:400;">'
+    +'<b>One-time setup (5 min):</b><br>'
+    +'1. Create a Google Form with <b>10 Short-answer questions</b>, in this order: Session ID, Phase, Grade, Language, Q1, Q2, Q3, Q4, Q5, Helpful.<br>'
+    +'2. Settings: turn <b>OFF</b> "Collect email addresses", OFF sign-in requirement / "Restrict to users in your org" (needed for anonymous submissions), OFF "Limit to 1 response".<br>'
+    +'3. Click ⋮ → <b>Get pre-filled link</b>. Fill the answers EXACTLY as: <code>SID</code>, <code>PHASE</code>, <code>GRADE</code>, <code>LANG</code>, <code>11</code>, <code>12</code>, <code>13</code>, <code>14</code>, <code>15</code>, <code>16</code>. Click "Get link" → "Copy link".<br>'
+    +'4. Paste that link below:<br>'
+    +'<input class="finput" id="gformUrl" placeholder="https://docs.google.com/forms/d/e/…/viewform?usp=pp_url&entry.123=SID&…">'
+    +'<button class="ghostbtn" onclick="parseGformUrl()">Connect</button>'
+    +'<div id="gformParseMsg" class="note"></div>'
+    +'<p class="note">Tip: link the Form to a Sheet (Responses → Sheets icon) and every device feeds one spreadsheet. Then send this config to whoever maintains the file so it can be baked in for all devices.</p>'
+    +'</div></div>';
+}
+function toggleGformSetup(){
+  const el=document.getElementById("gformSetup");
+  el.style.display=el.style.display==="none"?"block":"none";
+}
+function parseGformUrl(){
+  const msg=document.getElementById("gformParseMsg");
+  try{
+    const raw=document.getElementById("gformUrl").value.trim();
+    const m=raw.match(/\/forms\/d\/e\/([^\/]+)\//);
+    if(!m)throw new Error("Couldn't find the form id — paste the full pre-filled link.");
+    const cfg={formId:m[1],fields:{}};
+    const qs=raw.split("?")[1]||"";
+    const map={"SID":"sid","PHASE":"phase","GRADE":"grade","LANG":"lang","11":"q1","12":"q2","13":"q3","14":"q4","15":"q5","16":"helpful"};
+    new URLSearchParams(qs).forEach((v,k)=>{
+      if(k.indexOf("entry.")===0&&map[v]!==undefined)cfg.fields[map[v]]=k;
+    });
+    const missing=Object.keys(map).map(k=>map[k]).filter(f=>!cfg.fields[f]);
+    if(missing.length)throw new Error("Missing fields: "+missing.join(", ")+". Re-check step 3's exact sample answers.");
+    localStorage.setItem(GFORM_LS_KEY,JSON.stringify(cfg));
+    msg.innerHTML='✅ Connected! To bake this into the file for ALL devices, copy this into GFORM_BAKED:<br><code style="font-size:.72rem;word-break:break-all;">'+JSON.stringify(cfg)+'</code>';
+    syncPending();
+    setTimeout(showDataPanel,2500);
+  }catch(e){ msg.textContent="⚠️ "+e.message; }
+}
+function disconnectGform(){
+  if(!confirm("Disconnect Google Form sync on this device? Local records are kept."))return;
+  try{localStorage.removeItem(GFORM_LS_KEY);}catch(e){}
+  showDataPanel();
+}
+function exportAssessCsv(){
+  const recs=loadRecords();
+  const head=["session_id","phase","timestamp","grade","language","q1_next_step_BLS4_BSMS6","q2_weekly_plan_BLS7_BSMS3","q3_belief_goal_M2","q4_control_M2_BSMS6","q5_trusted_adult_BSS3","workshop_helpful"];
+  const lines=[head.join(",")];
+  recs.forEach(r=>{
+    lines.push([r.sid,r.phase,r.ts,r.grade,r.lang,r.q1,r.q2,r.q3,r.q4,r.q5,r.helpful].map(v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"').join(","));
+  });
+  const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const d=new Date();
+  a.href=url;a.download="workshop-data-"+d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")+".csv";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+function clearAssessData(){
+  if(!confirm("Delete ALL assessment records stored on this device? Export the CSV first if you need them."))return;
+  try{localStorage.removeItem(ASSESS_KEY);}catch(e){}
+  showDataPanel();
+}
+</script>
+<style>
+.as-item{border-top:1px solid var(--line);padding:14px 0 4px;margin-top:6px;}
+.as-q{font-weight:700;font-size:.97rem;margin:0 0 10px;}
+.as-scale{display:flex;gap:8px;flex-wrap:wrap;}
+.as-btn{flex:1;min-width:44px;padding:12px 4px;border-radius:12px;border:2px solid var(--line);
+  background:#fff;font-size:1.05rem;font-weight:800;cursor:pointer;transition:all .12s;}
+.as-btn:hover{border-color:var(--accent);}
+.as-btn.sel{border-color:var(--accent);background:var(--accent);color:#fff;transform:scale(1.05);}
+#dataPanel table td{padding:6px 4px;border-bottom:1px solid var(--line);}
+</style>
 </body>
 </html>
