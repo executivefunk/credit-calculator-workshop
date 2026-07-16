@@ -535,6 +535,10 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
   <div id="gpResult"></div>
 </section>
 <div id="printPlanner"></div>
+<!-- ==================== PLAN PREVIEW (the reveal before the post) ==================== -->
+<section class="screen" id="scr-preview">
+  <div id="previewArea"></div>
+</section>
 <!-- ==================== ANONYMOUS PRE/POST ASSESSMENT ==================== -->
 <section class="screen" id="scr-assess">
   <div id="assessArea"></div>
@@ -4122,6 +4126,10 @@ function syncPending(){
 const ASCA_MAP={q1:"B-LS 4 / B-SMS 6",q2:"B-LS 7 / B-SMS 3",q3:"M 2",q4:"M 2 / B-SMS 6",q5:"B-SS 3"};
 let ASSESS=null, nextUnlockIsStaff=false, pendingAfterPost=null, assessReturn=null, AANS={};
 Object.assign(T,{
+  pv_title:["This is your plan 🎉","Este es tu plan 🎉"],
+  pv_sub:["Here's exactly what your printed plan will look like — yours to keep. Take a look, then one quick check-out and it's on its way.","Así se verá exactamente tu plan impreso — tuyo para conservar. Míralo, luego un chequeo rápido y estará en camino."],
+  pv_continue:["Looks good — continue →","Se ve bien — continuar →"],
+  pv_back:["← Make a change","← Hacer un cambio"],
   as_pre_title:["Quick check-in (1 minute)","Chequeo rápido (1 minuto)"],
   as_post_title:["Last step — quick check-out","Último paso — chequeo rápido"],
   as_pre_note:["6 quick taps before you start. 100% anonymous — no names, ever.","6 respuestas rápidas antes de comenzar. 100% anónimo — sin nombres, nunca."],
@@ -4157,9 +4165,34 @@ function requirePost(retryFn){
   if(!ASSESS||ASSESS.postDone)return false;
   pendingAfterPost=retryFn;
   assessReturn=curScreen;
+  if(typeof TR!=="undefined"&&TR){ renderPlanPreview(); showScreen("scr-preview"); }
+  else { renderAssess("post"); showScreen("scr-assess"); }
+  return true;
+}
+function renderPlanPreview(){
+  /* unveil the ACTUAL printed sheet (already built for the printer) so the
+     student sees their real tool before the check-out */
+  const src=document.getElementById("printPlanner");
+  let pages=src?src.innerHTML.replace(/<div class="pp-runfoot">[\s\S]*?<\/div>/,""):"";
+  document.getElementById("previewArea").innerHTML=
+    '<div class="card center" style="padding:16px;">'
+    +'<h2 style="margin:.2em 0;">'+t("pv_title")+'</h2>'
+    +'<p class="sub" style="margin-bottom:4px;">'+t("pv_sub")+'</p>'
+    +'<button class="bigbtn" onclick="pvContinue()">'+t("pv_continue")+'</button>'
+    +'<button class="ghostbtn" onclick="pvBack()">'+t("pv_back")+'</button>'
+    +'</div>'
+    +'<div class="pv-wrap">'+pages+'</div>';
+  window.scrollTo({top:0});
+}
+function pvContinue(){
   renderAssess("post");
   showScreen("scr-assess");
-  return true;
+}
+function pvBack(){
+  pendingAfterPost=null;
+  const back=assessReturn||"scr-tracker";
+  assessReturn=null;
+  showScreen(back);
 }
 function doPrint(){
   if(requirePost(doPrint))return;
@@ -4338,6 +4371,35 @@ function clearAssessData(){
 }
 </script>
 <style>
+/* on-screen rendering of the printed sheet, scoped to the preview */
+.pv-wrap .pp-page{background:#fff;border:2px solid #1a3a6b;border-radius:10px;padding:14px;margin:0 0 14px;box-shadow:var(--shadow);font-size:.85rem;overflow-x:auto;}
+.pv-wrap .pp-title{font-size:1.05rem;font-weight:800;color:#1a3a6b;border-bottom:2px solid #1a3a6b;padding-bottom:5px;margin:0 0 8px;}
+.pv-wrap .pp-meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.78rem;margin:0 0 8px;}
+.pv-wrap .pp-meta b{color:#1a3a6b;}
+.pv-wrap .pp-mixbox{border:1.5px solid #1a3a6b;border-radius:6px;background:#eef2fb;padding:6px 10px;font-size:.78rem;margin:0 0 8px;}
+.pv-wrap .pp-legend{border:1px solid #bbb;border-radius:6px;padding:5px 9px;font-size:.7rem;line-height:1.4;margin:0 0 8px;background:#fafafa;}
+.pv-wrap table{width:100%;border-collapse:collapse;}
+.pv-wrap th{border:1px solid #999;background:#e8eef8;padding:4px 6px;font-size:.72rem;text-align:left;}
+.pv-wrap td{border:1px solid #bbb;padding:3px 6px;vertical-align:middle;font-size:.75rem;}
+.pv-wrap .pp-wk{width:30px;text-align:center;font-weight:800;}
+.pv-wrap .pp-credits{width:46px;text-align:center;font-weight:800;}
+.pv-wrap td.pp-datecell em{display:block;font-size:.62rem;color:#1a3a6b;font-style:normal;font-weight:700;}
+.pv-wrap .pp-tag{font-size:.6rem;font-weight:700;border:1px solid #999;border-radius:4px;padding:0 4px;white-space:nowrap;}
+.pv-wrap .pp-tag.de1{background:#fef3c7;border-color:#f59e0b;}
+.pv-wrap .pp-tag.de2{background:#ccfbf1;border-color:#14b8a6;}
+.pv-wrap .pp-tag.op{background:#fee2e2;border-color:#ef4444;}
+.pv-wrap tr.pp-skip td{background:#d7f2e0;color:#065f46;}
+.pv-wrap tr.pp-op td{background:#fde2e2;color:#7f1d1d;}
+.pv-wrap tr.pp-buffer td{background:#e8f0fe;color:#1e40af;}
+.pv-wrap tr.pp-year td{background:#dce6f8;font-weight:800;text-align:center;color:#1a3a6b;}
+.pv-wrap tr.pp-total td{font-weight:800;background:#f1f5f9;}
+.pv-wrap .pp-breakcell{font-weight:800;font-size:.72rem;}
+.pv-wrap .pslot{display:inline-flex;align-items:flex-end;gap:4px;width:46%;margin:2px 2% 2px 0;}
+.pv-wrap .pbox{width:14px;height:14px;border:1.5px solid #333;border-radius:3px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#4b5563;}
+.pv-wrap .pslot.bonus .pbox{border-style:dashed;border-color:#999;color:#6b7280;}
+.pv-wrap .pline{flex:1;border-bottom:1px solid #555;height:14px;min-width:40px;}
+.pv-wrap .pslot.bonus .pline{border-bottom-style:dashed;border-bottom-color:#aaa;}
+.pv-wrap .pp-disc{margin-top:8px;border:1px solid #999;border-radius:6px;padding:6px 10px;font-size:.7rem;background:#fafafa;}
 .as-item{border-top:1px solid var(--line);padding:14px 0 4px;margin-top:6px;}
 .as-q{font-weight:700;font-size:.97rem;margin:0 0 10px;}
 .as-scale{display:flex;gap:8px;flex-wrap:wrap;}
