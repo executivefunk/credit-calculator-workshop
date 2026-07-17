@@ -3245,10 +3245,11 @@ function renderResults(){
       +'</button>';
   });
   html+='</div>'
+    /* no summary download/share here — the flow leads to picking a plan;
+       everything on this page rides along on the plan printout anyway.
+       (buildSummaryPdfDoc stays: the lockout snapshot still uses it.) */
     +'<div class="card no-print">'
-    +(canSharePdf()?'<button class="bigbtn" id="sumSharePdfBtn" onclick="shareSummaryPdf()">'+t("share_sum_pdf")+'</button>':'')
-    +'<button class="'+(canSharePdf()?'ghostbtn':'bigbtn')+'" id="sumPdfBtn" onclick="downloadSummaryPdf()">'+t("dl_sum_pdf")+'</button>'
-    +'<p class="note center" style="margin-top:12px;">'+t("disclaimer")+'</p>'
+    +'<p class="note center" style="margin:0;">'+t("disclaimer")+'</p>'
     +'</div>';
   area.innerHTML=html;
   if(r.avg<=2)setTimeout(()=>confetti(40),350);
