@@ -2306,8 +2306,10 @@ function generateSchoolYear(year) {
     const lastWeek=allWeeks[allWeeks.length-1];
     if(countWeekdays(lastWeek.start,lastWeek.end)<5){allWeeks[allWeeks.length-2].end=lastWeek.end;allWeeks.pop();}
   }
-  const milestones={26:{en:'(Winter Break)',es:'(Vacaciones de invierno)'},27:{en:'(Winter Break)',es:'(Vacaciones de invierno)'},
-    30:{en:'- End of Semester 1',es:'- Fin del semestre 1'},46:{graduation:true}};
+  const milestones={22:{en:'(Thanksgiving Week)',es:'(Semana de Acción de Gracias)'},
+    26:{en:'(Winter Break)',es:'(Vacaciones de invierno)'},27:{en:'(Winter Break)',es:'(Vacaciones de invierno)'},
+    30:{en:'- End of Semester 1',es:'- Fin del semestre 1'},41:{en:'(Spring Week)',es:'(Semana de primavera)'},
+    46:{graduation:true}};
   const lastWeekNum=allWeeks.length;
   const week1SchoolDays=countWeekdays(allWeeks[0].start,allWeeks[0].end);
   const result={dateRangesEN:[''],weeks:[],isoStarts:[''],totalWeeks:allWeeks.length,
@@ -2335,7 +2337,7 @@ let S=null, SY=null, NY=null, curScreen="scr-lock", curStep=1, customSkipSeq=0;
 function defaultState(){
   return {
     yearMode:"current", credits:null, startWeek:1, endWeek:46,
-    crossYear:false, endWeekNext:46,
+    crossYear:false, endWeekNext:46, customEnd:false,
     skipW1:true, skipTG:false, skipWinter:false, skipSpring:false,
     nySkipW1:true, nySkipTG:false, nySkipWinter:false, nySkipSpring:false,
     customSkips:[], nyCustomSkips:[],
@@ -2900,17 +2902,20 @@ function renderTimelineUI(){
   chips.forEach(c=>{
     const b=document.createElement("button");
     b.className="chip";
-    const sel=(c.w==="custom")?!isPreset:(S.endWeek===c.w&&isPreset);
+    /* "Custom" is an explicit choice the student made, not something we
+       infer from the week number — otherwise picking Custom while the week
+       still equals a preset instantly re-hides the picker */
+    const sel=(c.w==="custom")?(S.customEnd||!isPreset):(!S.customEnd&&S.endWeek===c.w&&isPreset);
     b.innerHTML='<span class="chip-mark">'+(sel?"✓":"○")+'</span> '+c.label
       +(c.sub?'<span class="chip-sub">'+c.sub+'</span>':'');
     if(sel)b.classList.add("sel");
     if(S.crossYear){b.style.opacity=.45;b.style.cursor="not-allowed";}
-    else b.onclick=()=>{ if(c.w==="custom"){document.getElementById("customEndWrap").style.display="block";}
-      else{S.endWeek=c.w;document.getElementById("customEndWrap").style.display="none";}
+    else b.onclick=()=>{ if(c.w==="custom"){S.customEnd=true;}
+      else{S.customEnd=false;S.endWeek=c.w;}
       renderTimelineUI();updatePaceChip();};
     row.appendChild(b);
   });
-  document.getElementById("customEndWrap").style.display=(!isPreset&&!S.crossYear)?"block":"none";
+  document.getElementById("customEndWrap").style.display=((S.customEnd||!isPreset)&&!S.crossYear)?"block":"none";
   document.getElementById("endWeekSel").value=String(S.endWeek);
   /* good-to-know note (the deadline-cushion warning still appears on the
      results page; this step stays encouraging) */
