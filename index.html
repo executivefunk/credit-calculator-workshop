@@ -2236,6 +2236,9 @@ const T = {
   tg_name:["THANKSGIVING WEEK","SEMANA DE ACCIÓN DE GRACIAS"],
   spring_name:["SPRING WEEK","SEMANA DE PRIMAVERA"],
   limited_suffix:["LIMITED SCHEDULE, credits optional","HORARIO LIMITADO, créditos opcionales"],
+  limited_appt:["Limited teacher appointments","Citas limitadas con maestros"],
+  pp_limited_appt:["LIMITED TEACHER APPOINTMENTS — credits optional","CITAS LIMITADAS CON MAESTROS — créditos opcionales"],
+  pp_closed:["SCHOOL CLOSED — credits optional","ESCUELA CERRADA — créditos opcionales"],
   winter_name:["WINTER BREAK","VACACIONES DE INVIERNO"],
   tg_tc:["Thanksgiving week","Semana de Acción de Gracias"],
   winter_tc:["Winter break","Vacaciones de invierno"],
@@ -3334,9 +3337,9 @@ function renderTracker(dp,keepVals){
     if(w.inOP1)tags+='<span class="wktag wt-op">🏕️ '+(esc(r.op1.name)||"OP 1")+'</span>';
     if(w.inOP2)tags+='<span class="wktag wt-op">🏕️ '+(esc(r.op2.name)||"OP 2")+'</span>';
     if(w.hardSkip&&!(w.inOP1||w.inOP2)){
-      if(w.skipKind==="limited")tags+='<span class="wktag wt-skip">'+(w.actualWeek===22?"🦃 "+t("tg_tc"):"🌸 "+t("spring_tc"))+' — '+t("limited_short")+'</span>';
+      if(w.skipKind==="limited")tags+='<span class="wktag wt-skip">⏳ '+t("limited_appt")+'</span>';
       else if(w.skipKind==="custom")tags+='<span class="wktag wt-skip">🙋 '+t("week_off")+'</span>';
-      else tags+='<span class="wktag wt-skip">❄️ '+t("winter_tc")+' — '+t("closed_short")+'</span>';
+      else tags+='<span class="wktag wt-skip">❄️ '+t("closed_short")+'</span>';
     }
     if(w.softSkip)tags+='<span class="wktag wt-skip">'+(LANG==="es"?"semana corta":"short week")+'</span>';
     const v=TR.vals[i];
@@ -3417,8 +3420,8 @@ function buildPrintPlanner(){
         let bslots="";
         for(let k=0;k<4;k++)bslots+='<span class="pslot bonus"><span class="pbox"></span><span class="pline"></span></span>';
         const skipLabel=w.skipKind==="limited"
-          ?(w.actualWeek===22?"🦃 "+t("tg_name"):"🌸 "+t("spring_name"))+" — "+t("limited_suffix")
-          :w.skipKind==="break"?("❄️ "+t("winter_name")+" — "+t("closed_suffix"))
+          ?"⏳ "+t("pp_limited_appt")
+          :w.skipKind==="break"?("❄️ "+t("pp_closed"))
           :w.skipKind==="custom"?t("pp_custom_row"):t("pp_break_row");
         push('<tr class="pp-skip"><td class="pp-wk">'+extWeekNum(w.week)+'</td>'
           +'<td class="pp-datecell">'+core+tags+(note?'<em>'+note+'</em>':"")+'<em>'+skipLabel+'</em></td>'
