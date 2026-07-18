@@ -2055,7 +2055,7 @@ const T = {
   s2_start_label:["Starting from week","Comenzando desde la semana"],
   s2_change_start:["Change start week","Cambiar semana de inicio"],
   s2_finish_label:["Finish by","Terminar para"],
-  s2_cross_title:["My plan continues into next school year (summer school / longer plan)","Mi plan continúa el próximo año escolar (escuela de verano / plan más largo)"],
+  s2_cross_title:["My plan continues into next school year (I'll finish sometime next school year)","Mi plan continúa el próximo año escolar (terminaré en algún momento del próximo año escolar)"],
   s2_cross_finish:["Finish by (next school year)","Terminar para (próximo año escolar)"],
   s3_title:["Weeks you plan to skip 😌","Semanas que planeas omitir 😌"],
   s3_sub:["If your pace allows it, we've already switched on the breaks you can afford. Flip any off if you plan to work through them.","Si tu ritmo lo permite, ya activamos los descansos que puedes tomar. Desactiva los que planeas trabajar."],
@@ -2190,6 +2190,7 @@ const T = {
   gp_wont_fit:["({n} credits won't fit)","({n} créditos no caben)"],
   gp_or:["— Or —","— O —"],
   gp_counselor_t:["Talk with your school counselor","Habla con tu consejero/a escolar"],
+  gp_longer_ok:["💬 A longer plan still gets you there — a diploma is a diploma. Before you decide anything, set up an appointment with your school counselor or talk with your teacher. Together you can look at every option — college classes, outside programs, or whether a faster pace is realistic for you — and choose what fits your life.","💬 Un plan más largo también te lleva a la meta — un diploma es un diploma. Antes de decidir, agenda una cita con tu consejero/a escolar o habla con tu maestro. Juntos pueden revisar todas las opciones — clases de colegio, programas externos, o si un ritmo más rápido es realista para ti — y elegir lo que mejor se adapte a tu vida."],
   gp_counselor:["Finishing on time will need a customized plan with extra support. Set up an appointment soon so you can design the best path together.","Para terminar a tiempo necesitarás un plan personalizado con apoyo extra. Agenda una cita pronto para diseñar juntos el mejor camino."],
   gp_remainder:["(Remainder)","(Resto del año)"],
   gp_fullyear:["(Full year)","(Año completo)"],
@@ -2718,8 +2719,8 @@ function tryUnlock(){
   const inp=document.getElementById("codeInput");
   const v=(inp.value||"").trim().toUpperCase();
   const err=document.getElementById("lockErr");
-  if(v===ADMIN_CODE.toUpperCase()){ inp.value=""; err.textContent=""; showAdmin(); return; }
-  if(isValidStudentCode(v)){ inp.value=""; err.textContent=""; unlock(); return; }
+  if(v===ADMIN_CODE.toUpperCase()){ inp.value=""; inp.type="text"; err.textContent=""; showAdmin(); return; }
+  if(isValidStudentCode(v)){ inp.value=""; inp.type="text"; err.textContent=""; unlock(); return; }
   err.textContent=t("lock_wrong");
   inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake");
 }
@@ -2775,6 +2776,7 @@ function wipeToLock(){
   document.getElementById("appHeader").style.display="none";
   hideAdmin();
   document.getElementById("codeInput").value="";
+  document.getElementById("codeInput").type="text";
   document.getElementById("lockErr").textContent="";
   renderLockDownloads();
   showScreen("scr-lock");
@@ -3961,6 +3963,11 @@ function calcGradPlan(){
       html+='<div class="warnbox">🗓️ <b>'+t("gp_counselor_t")+'</b><br>'+t("gp_counselor")+'</div>';
     } else html+=gpRenderRows(periods5,true,combined5,calcConfig5);
     html+='</div>';
+    /* the gut-punch softener: when the student's class year won't fit,
+       normalize the longer path and open the counselor door */
+    if(opt1WontFit&&!opt2NeedsCounselor){
+      html+='<div class="notice" style="margin-top:12px;line-height:1.5;">'+t("gp_longer_ok")+'</div>';
+    }
     const gyaWorks=gyaEligible&&leftoverGya===0&&maxPaceGya<=2.0;
     if(gyaWorks){
       html+='<div class="gp-or">'+t("gp_or")+'</div>';
@@ -4071,7 +4078,12 @@ document.addEventListener("DOMContentLoaded",()=>{
   /* lock screen */
   const code=document.getElementById("codeInput");
   code.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();tryUnlock();}});
-  code.addEventListener("input",()=>{document.getElementById("lockErr").textContent="";});
+  code.addEventListener("input",()=>{
+    document.getElementById("lockErr").textContent="";
+    /* projector safety: staff codes start with a letter — mask as dots
+       immediately so N106 is never readable on a projected screen */
+    code.type=/^[A-Za-z]/.test(code.value)?"password":"text";
+  });
   /* prevent scroll-wheel from changing number inputs */
   document.addEventListener("wheel",e=>{
     if(document.activeElement&&document.activeElement.type==="number")document.activeElement.blur();
