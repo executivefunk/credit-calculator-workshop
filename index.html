@@ -2007,7 +2007,8 @@ const STAFF_CODES = { "COUNS106":"workshop", "N106":"other" };
 const CODE_SECRET = "WCC-2026-KEY"; // change this to re-key ALL student codes
 const CODE_PERIOD_MIN = 10;         // student code rotates every N minutes
 const CODE_GRACE_SEC = 120;         // old code still accepted this many seconds after rollover
-const IDLE_MINUTES = 30;            // inactivity timeout (wipes data, returns to lock screen)
+const SESSION_MINUTES = 30;         // FIRM session length from unlock — locks even during active use
+const SESSION_WARN_MIN = 2;         // heads-up toast this many minutes before the lock
 const TOTAL_GRAD_CREDITS = 230;
 
 /* =====================================================================
@@ -2076,6 +2077,7 @@ const T = {
   gp_remaining:["Credits I still have remaining:","Créditos que aún me quedan:"],
   next:["Next →","Siguiente →"],
   see_plan:["See my plan 🎉","Ver mi plan 🎉"],
+  session_warn:["⏱️ 2 minutes left in this session — wrap up and download your plan!","⏱️ Quedan 2 minutos en esta sesión — ¡termina y descarga tu plan!"],
   locked_expired:["⏱️ Your session has expired. To use the tool again, come to another workshop.","⏱️ Tu sesión ha expirado. Para usar la herramienta otra vez, ven a otro taller."],
   locked_dl:["You can still download what you worked on:","Aún puedes descargar lo que trabajaste:"],
   week:["Week","Semana"],
@@ -2776,6 +2778,7 @@ function wipeToLock(){
   ASSESS=null;
   unlocked=false;
   if(idleTimer){clearTimeout(idleTimer);idleTimer=null;}
+  if(warnTimer){clearTimeout(warnTimer);warnTimer=null;}
   S=defaultState(); rebuildYearData();
   S.startWeek=defaultStartWeek();
   syncWizardInputs();
@@ -2847,14 +2850,17 @@ function downloadSnapshot(which){
   document.body.appendChild(a); a.click();
   document.body.removeChild(a);
 }
+let warnTimer=null;
 function resetIdle(){
+  /* FIRM session clock: starts once at unlock and is never extended by
+     activity — the workshop session ends at exactly SESSION_MINUTES */
   if(!unlocked)return;
   if(idleTimer)clearTimeout(idleTimer);
-  idleTimer=setTimeout(lockNow,IDLE_MINUTES*60*1000);
+  if(warnTimer)clearTimeout(warnTimer);
+  warnTimer=setTimeout(()=>{ if(unlocked)toast(t("session_warn")); },
+    Math.max(1,(SESSION_MINUTES-SESSION_WARN_MIN))*60*1000);
+  idleTimer=setTimeout(lockNow,SESSION_MINUTES*60*1000);
 }
-["pointerdown","keydown","touchstart","input"].forEach(ev=>{
-  document.addEventListener(ev,()=>{ if(unlocked)resetIdle(); },{passive:true});
-});
 
 /* =====================================================================
    LANGUAGE
