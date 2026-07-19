@@ -387,6 +387,7 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
     <div class="center" style="font-size:3rem;font-weight:800;letter-spacing:.18em;color:var(--accent);" id="adminCode">----</div>
     <p class="center note"><span data-i18n="admin_next_in">New code in</span> <b id="adminCountdown">--:--</b></p>
     <div class="subnote center"><span data-i18n="admin_next_code">Next code:</span> <b id="adminNextCode">----</b></div>
+    <div class="subnote center" id="facTagLine" style="margin-top:8px;"></div>
     <button class="ghostbtn" onclick="adminEnterApp()" data-i18n="admin_enter">Enter the tool</button>
     <button class="ghostbtn" onclick="showDataPanel()">📊 Workshop data</button>
     <button class="ghostbtn" onclick="hideAdmin()" data-i18n="admin_close">Close panel</button>
@@ -1998,7 +1999,11 @@ t is not in the DOM anymore"),w.logger.debug("Finished rendering"),[2,Q]}})})},D
 /* =====================================================================
    CONFIG — staff settings (edit these lines only)
    ===================================================================== */
-const ADMIN_CODE = "N106";          // staff code: opens the panel that shows the current student code
+/* Staff codes and their facilitator tags. Each code opens the staff panel
+   AND tags this device — every assessment record from it carries the tag
+   as a session-id prefix (e.g. "workshop-x7k2...") so workshop data stays
+   separable in the Google Sheet. Tags: one lowercase word, no dashes. */
+const STAFF_CODES = { "COUNS106":"workshop", "N106":"other" };
 const CODE_SECRET = "WCC-2026-KEY"; // change this to re-key ALL student codes
 const CODE_PERIOD_MIN = 10;         // student code rotates every N minutes
 const CODE_GRACE_SEC = 120;         // old code still accepted this many seconds after rollover
@@ -2719,13 +2724,19 @@ function tryUnlock(){
   const inp=document.getElementById("codeInput");
   const v=(inp.value||"").trim().toUpperCase();
   const err=document.getElementById("lockErr");
-  if(v===ADMIN_CODE.toUpperCase()){ inp.value=""; inp.type="text"; err.textContent=""; showAdmin(); return; }
+  const staffTag=STAFF_CODES[v];
+  if(staffTag){
+    try{localStorage.setItem("wcc_facilitator",staffTag);}catch(e){}
+    inp.value=""; inp.type="text"; err.textContent=""; showAdmin(); return;
+  }
   if(isValidStudentCode(v)){ inp.value=""; inp.type="text"; err.textContent=""; unlock(); return; }
   err.textContent=t("lock_wrong");
   inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake");
 }
 function showAdmin(){
   document.getElementById("adminPanel").style.display="block";
+  const ft=document.getElementById("facTagLine");
+  if(ft)ft.innerHTML='🏷️ Recording this device\'s workshop data as: <b>'+(currentFacTag()||"untagged")+'</b>';
   updateAdmin();
   if(adminInt)clearInterval(adminInt);
   adminInt=setInterval(updateAdmin,1000);
@@ -4168,8 +4179,11 @@ Object.assign(T,{
   as_submit:["Done ✓","Listo ✓"],
   as_thanks:["Thank you! 🙌","¡Gracias! 🙌"]
 });
+function currentFacTag(){
+  try{return localStorage.getItem("wcc_facilitator")||"";}catch(e){return "";}
+}
 function startAssessSession(){
-  ASSESS={sid:Math.random().toString(36).slice(2,10)+Date.now().toString(36),
+  ASSESS={sid:(currentFacTag()||"untagged")+"-"+Math.random().toString(36).slice(2,10)+Date.now().toString(36),
     preDone:false,postDone:false,staff:nextUnlockIsStaff};
   if(nextUnlockIsStaff){ASSESS.preDone=true;ASSESS.postDone=true;}
   nextUnlockIsStaff=false;
@@ -4299,6 +4313,8 @@ function showDataPanel(){
   }
   const grades={};
   pre.forEach(r=>{ if(r.grade)grades[r.grade]=(grades[r.grade]||0)+1; });
+  const facs={};
+  pre.forEach(r=>{ const m=String(r.sid||"").match(/^([a-z]+)-/); const k=m?m[1]:"untagged"; facs[k]=(facs[k]||0)+1; });
   el.innerHTML='<h2>📊 Workshop Data</h2>'
     +'<p class="sub">Anonymous pre/post assessment · ASCA Mindsets &amp; Behaviors aligned · this device only</p>'
     +'<div class="statrow" style="justify-content:flex-start;">'
@@ -4312,6 +4328,7 @@ function showDataPanel(){
     +'<thead><tr style="border-bottom:2px solid var(--line);"><th style="text-align:left;">Item</th><th>Pre</th><th>Post</th><th>Δ</th></tr></thead>'
     +'<tbody>'+rows+'</tbody></table>'
     +(Object.keys(grades).length?'<p class="note" style="margin-top:10px;">By grade (pre): '+Object.keys(grades).sort().map(g=>g+"th: "+grades[g]).join(" · ").replace("otherth:","Other:")+'</p>':"")
+    +(Object.keys(facs).length?'<p class="note">🏷️ Sessions by facilitator tag (pre): '+Object.keys(facs).sort().map(k=>k+": "+facs[k]).join(" · ")+'</p>':"")
     +gformStatusHtml(recs)
     +'<button class="bigbtn" onclick="exportAssessCsv()">⬇️ Export CSV ('+recs.length+' records)</button>'
     +'<button class="ghostbtn" onclick="clearAssessData()">🗑️ Clear data on this device</button>'
