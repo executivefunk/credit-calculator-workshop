@@ -2007,17 +2007,22 @@ const STAFF_CODES = { "COUNS106":"workshop", "N106":"other" };
 const CODE_SECRET = "WCC-2026-KEY"; // change this to re-key ALL student codes
 const CODE_PERIOD_MIN = 10;         // student code rotates every N minutes
 const CODE_GRACE_SEC = 120;         // old code still accepted this many seconds after rollover
-const SESSION_MINUTES = 30;         // FIRM session length from unlock — locks even during active use
-const SESSION_WARN_MIN = 2;         // heads-up toast this many minutes before the lock
+const SESSION_MINUTES = 35;         // FIRM session length from unlock — locks even during active use
+                                    // (workshop is 30 min; the extra 5 is grace so a slow student's
+                                    //  check-out is never wiped mid-answer)
+const SESSION_WARN_MIN = 5;         // warning fires at minute 30 — right as the workshop wraps
 const TOTAL_GRAD_CREDITS = 230;
 
 /* =====================================================================
    ROTATING ACCESS CODE (deterministic, offline — same code on every
    device with the same file, secret, and clock)
    ===================================================================== */
-function codeForBucket(offset) {
+function codeForBucket(offset, tag) {
+  /* each facilitator tag gets its OWN rotating 4-digit code — the code a
+     student types is what attributes their records, so their Chromebooks
+     need zero setup */
   const bucket = Math.floor(Date.now() / (CODE_PERIOD_MIN * 60000)) + (offset || 0);
-  const s = CODE_SECRET + "|" + bucket;
+  const s = CODE_SECRET + "|" + (tag || "") + "|" + bucket;
   let h = 2166136261 >>> 0;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
   return String(h % 10000).padStart(4, "0");
@@ -2027,10 +2032,14 @@ function secsLeftInBucket() {
   return Math.floor((ms - (Date.now() % ms)) / 1000);
 }
 function secsIntoBucket() { return CODE_PERIOD_MIN * 60 - secsLeftInBucket(); }
-function isValidStudentCode(v) {
-  if (v === codeForBucket(0)) return true;
-  if (v === codeForBucket(-1) && secsIntoBucket() <= CODE_GRACE_SEC) return true;
-  return false;
+function matchStudentCode(v) {
+  /* returns the facilitator tag whose code this is, or null */
+  const tags = [...new Set(Object.values(STAFF_CODES))];
+  for (const tg of tags) {
+    if (v === codeForBucket(0, tg)) return tg;
+    if (v === codeForBucket(-1, tg) && secsIntoBucket() <= CODE_GRACE_SEC) return tg;
+  }
+  return null;
 }
 
 /* =====================================================================
@@ -2077,7 +2086,7 @@ const T = {
   gp_remaining:["Credits I still have remaining:","Créditos que aún me quedan:"],
   next:["Next →","Siguiente →"],
   see_plan:["See my plan 🎉","Ver mi plan 🎉"],
-  session_warn:["⏱️ 2 minutes left in this session — wrap up and download your plan!","⏱️ Quedan 2 minutos en esta sesión — ¡termina y descarga tu plan!"],
+  session_warn:["⏱️ Time's almost up — wrap up and download your plan!","⏱️ El tiempo casi termina — ¡concluye y descarga tu plan!"],
   locked_expired:["⏱️ Your session has expired. To use the tool again, come to another workshop.","⏱️ Tu sesión ha expirado. Para usar la herramienta otra vez, ven a otro taller."],
   locked_dl:["You can still download what you worked on:","Aún puedes descargar lo que trabajaste:"],
   week:["Week","Semana"],
@@ -2728,17 +2737,18 @@ function tryUnlock(){
   const err=document.getElementById("lockErr");
   const staffTag=STAFF_CODES[v];
   if(staffTag){
-    try{localStorage.setItem("wcc_facilitator",staffTag);}catch(e){}
+    panelTag=staffTag;
     inp.value=""; inp.type="text"; err.textContent=""; showAdmin(); return;
   }
-  if(isValidStudentCode(v)){ inp.value=""; inp.type="text"; err.textContent=""; unlock(); return; }
+  const stuTag=matchStudentCode(v);
+  if(stuTag){ sessionTag=stuTag; inp.value=""; inp.type="text"; err.textContent=""; unlock(); return; }
   err.textContent=t("lock_wrong");
   inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake");
 }
 function showAdmin(){
   document.getElementById("adminPanel").style.display="block";
   const ft=document.getElementById("facTagLine");
-  if(ft)ft.innerHTML='🏷️ Recording this device\'s workshop data as: <b>'+(currentFacTag()||"untagged")+'</b>';
+  if(ft)ft.innerHTML='🏷️ Students who enter this code are recorded as: <b>'+(panelTag||"untagged")+'</b>';
   updateAdmin();
   if(adminInt)clearInterval(adminInt);
   adminInt=setInterval(updateAdmin,1000);
@@ -2748,12 +2758,12 @@ function hideAdmin(){
   if(adminInt){clearInterval(adminInt);adminInt=null;}
 }
 function updateAdmin(){
-  document.getElementById("adminCode").textContent=codeForBucket(0);
-  document.getElementById("adminNextCode").textContent=codeForBucket(1);
+  document.getElementById("adminCode").textContent=codeForBucket(0,panelTag);
+  document.getElementById("adminNextCode").textContent=codeForBucket(1,panelTag);
   const s=secsLeftInBucket();
   document.getElementById("adminCountdown").textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
 }
-function adminEnterApp(){ nextUnlockIsStaff=true; hideAdmin(); unlock(); }
+function adminEnterApp(){ nextUnlockIsStaff=true; sessionTag=panelTag; hideAdmin(); unlock(); }
 function unlock(){
   unlocked=true;
   lockExpired=false;
@@ -3910,7 +3920,9 @@ function renderPlanner(){
   const currentSY=getCurrentSchoolYear();
   const prev=S.gpFreshman;
   sel.innerHTML='<option value="">'+t("gp_select")+'</option>';
-  for(let y=currentSY-3;y<=currentSY+1;y++){
+  /* reach back 6 years so 5th/6th/7th-year students can select their true
+     start year — the planner math already supports up to year 8 */
+  for(let y=currentSY-6;y<=currentSY+1;y++){
     const o=document.createElement("option");
     o.value=y;o.textContent=y+"–"+(y+1);
     sel.appendChild(o);
@@ -4163,6 +4175,7 @@ function syncPending(){
 }
 const ASCA_MAP={q1:"B-LS 4 / B-SMS 6",q2:"B-LS 7 / B-SMS 3",q3:"M 2",q4:"M 2 / B-SMS 6",q5:"B-SS 3"};
 let ASSESS=null, nextUnlockIsStaff=false, pendingAfterPost=null, assessReturn=null, AANS={};
+let panelTag="", sessionTag="";
 Object.assign(T,{
   pv_title:["This is your plan 🎉","Este es tu plan 🎉"],
   pv_sub:["Here's exactly what your printed plan will look like — yours to keep. Take a look, then one quick check-out and it's on its way.","Así se verá exactamente tu plan impreso — tuyo para conservar. Míralo, luego un chequeo rápido y estará en camino."],
@@ -4185,11 +4198,8 @@ Object.assign(T,{
   as_submit:["Done ✓","Listo ✓"],
   as_thanks:["Thank you! 🙌","¡Gracias! 🙌"]
 });
-function currentFacTag(){
-  try{return localStorage.getItem("wcc_facilitator")||"";}catch(e){return "";}
-}
 function startAssessSession(){
-  ASSESS={sid:(currentFacTag()||"untagged")+"-"+Math.random().toString(36).slice(2,10)+Date.now().toString(36),
+  ASSESS={sid:(sessionTag||"untagged")+"-"+Math.random().toString(36).slice(2,10)+Date.now().toString(36),
     preDone:false,postDone:false,staff:nextUnlockIsStaff};
   if(nextUnlockIsStaff){ASSESS.preDone=true;ASSESS.postDone=true;}
   nextUnlockIsStaff=false;
