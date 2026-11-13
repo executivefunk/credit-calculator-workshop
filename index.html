@@ -5,6 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Weekly Credit Calculator</title>
 <link rel="manifest" href="manifest.json">
+<script>
+/* ######################################################################
+   SETTINGS — the links this tool uses. This is the only part of the file
+   you should need to edit. Paste each link BETWEEN THE QUOTES and save.
+   ###################################################################### */
+
+/* 1) LINK BUTTONS SHEET
+   Buttons that open a web page for students (counselor appointments, a
+   form to upload a plan, and so on) are kept in a Google Sheet:
+     Column A = the words on the button      Column B = the link (https://...)
+     Column C = the words in Spanish (optional).  A header row is fine.
+   In the sheet: File > Share > Publish to web > Comma-separated values (.csv)
+   Paste the link it gives you here: */
+const LINKS_SHEET_URL = "";
+
+/* 2) Optional: the same sheet's normal editing link. It adds an "Edit
+   buttons" shortcut to the Staff Panel. Leave "" to skip it. */
+const LINKS_SHEET_EDIT_URL = "";
+
+/* 3) SURVEY CONNECTION (already set up)
+   This sends the check-in / check-out answers to your Google Form, which
+   fills your responses spreadsheet. Leave it alone unless you move to a new
+   form. To connect a new one, use Staff Panel > Workshop data, which
+   gives you a replacement for this whole line. */
+const GFORM_BAKED={"formId":"1FAIpQLScPs2sJniiedGZWZINMENXwjXlCkoLW6weC4EbSDAxUnnqR2Q","fields":{"sid":"entry.1651829273","phase":"entry.510706584","grade":"entry.1773917561","lang":"entry.1426559880","q1":"entry.1429236220","q2":"entry.1529227603","q3":"entry.1237065122","q4":"entry.1359372442","q5":"entry.444283361","helpful":"entry.265268604"}};
+
+/* ####################### END OF SETTINGS ############################## */
+</script>
 <style>
 :root{
   --bg:#eef2f7; --card:#ffffff; --ink:#1e293b; --muted:#64748b;
@@ -63,6 +91,7 @@ h2{font-size:1.18rem;margin:.2em 0 .4em;font-weight:800;}
 .bigbtn:disabled{background:#c7cbe8;box-shadow:none;cursor:not-allowed;transform:none;}
 .ghostbtn{display:block;width:100%;padding:14px;margin-top:10px;border:2px solid var(--line);
   border-radius:14px;background:#fff;color:var(--ink);font-size:1rem;font-weight:700;cursor:pointer;}
+a.bookbtn{text-decoration:none;text-align:center;box-sizing:border-box;border-color:var(--accent);color:var(--accent-dark);}
 .ghostbtn:hover{background:var(--accent-soft);border-color:var(--accent);}
 /* mode select cards */
 .modecard{display:flex;gap:14px;align-items:center;width:100%;text-align:left;
@@ -209,9 +238,14 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
 .pc-go{position:absolute;right:12px;bottom:12px;font-size:1.1rem;color:var(--accent);}
 /* ============ TRACKER ============ */
 .badgerow{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px;}
+/* tracker: Target / Planned / Left stay in view while the student scrolls */
+.badgerow.trk-sticky{position:sticky;top:var(--hdrH,0px);z-index:20;background:var(--card);
+  margin:8px -8px 4px;padding:8px;border-radius:0 0 12px 12px;box-shadow:0 6px 10px -8px rgba(15,23,42,.35);}
+@media print{.badgerow.trk-sticky{position:static;box-shadow:none;}}
 .tbadge{background:#f1f5f9;border-radius:10px;padding:6px 12px;font-size:.85rem;font-weight:700;}
 .tbadge b{font-size:1rem;}
 .tbadge.ok{background:var(--good-soft);color:#14532d;}
+.tbadge.todo{background:var(--warn-soft);color:#92400e;}
 .tbadge.no{background:var(--bad-soft);color:#7f1d1d;}
 .wkrow{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--line);}
 .wkrow:last-child{border-bottom:none;}
@@ -257,6 +291,28 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
 .gp-sec-title{color:#fff;font-weight:800;text-align:center;border-radius:9px;padding:8px 10px;font-size:.92rem;margin-bottom:4px;}
 .gp-sec-trad .gp-sec-title{background:#16a34a;}
 .gp-sec-ext .gp-sec-title{background:#d97706;}
+.gp-sec-fast{border-color:#4f46e5;background:#f5f5ff;}
+.gl-box{margin-top:12px;}
+.gl-box h3{margin:0 0 2px;font-size:1rem;}
+.gl-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);
+  border-radius:12px;padding:11px 12px;margin-top:8px;cursor:pointer;font:inherit;color:inherit;border-left-width:6px;}
+.gl-row.open{box-shadow:0 0 0 2px var(--accent);}
+.gl-row .gl-main{flex:1;min-width:0;}
+.gl-row .gl-name{font-weight:800;font-size:.95rem;}
+.gl-row .gl-class{font-size:.84rem;font-weight:700;color:var(--accent-dark);margin-top:2px;}
+.gl-row .gl-name{text-wrap:balance;}
+.gl-row.muted .gl-class{color:var(--muted);}
+.gl-row .gl-line{font-size:.84rem;color:var(--muted);margin-top:2px;}
+.gp-sec-title{text-wrap:balance;}
+.gl-row .gl-chev{font-weight:800;color:var(--accent);transition:transform .15s;}
+.gl-row.open .gl-chev{transform:rotate(90deg);}
+.gl-row.muted{background:#f8fafc;}
+.gl-row.muted .gl-name{color:var(--muted);font-weight:700;}
+.gl-detail{display:none;}
+.gl-detail.open{display:block;}
+.gp-sec-fast .gp-sec-title{background:#4f46e5;}
+.gp-sec-catch{border-color:#0891b2;background:#f0fbfd;}
+.gp-sec-catch .gp-sec-title{background:#0e7490;}
 .gp-or{text-align:center;color:var(--muted);font-weight:800;margin:14px 0 2px;font-size:.9rem;}
 .gp-usebtn{width:100%;margin-top:9px;padding:11px;border:none;border-radius:10px;background:var(--accent);
   color:#fff;font-weight:800;cursor:pointer;font-size:.86rem;line-height:1.3;}
@@ -276,6 +332,9 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
 .wkrow.oprow .wk-date{color:#7f1d1d;font-weight:600;}
 .wkrow.bufrow{background:#eef4ff;border-left:4px solid #60a5fa;border-radius:8px;}
 .wkrow.bufrow .wk-date{color:#1e40af;font-weight:600;}
+body.hiset #wizbar .wdot[data-step="1"],body.hiset #wizbar .wdot[data-step="4"],body.hiset #scr-wizard .steplabel{display:none;}
+.ghostbtn:disabled{opacity:.45;cursor:not-allowed;}
+.wktag.wt-lim{background:#fef3c7;color:#92400e;}
 .wktag.wt-buf{background:#dbeafe;color:#1e40af;}
 /* confetti */
 #confettiCanvas{position:fixed;inset:0;pointer-events:none;z-index:90;}
@@ -388,6 +447,14 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
     <p class="center note"><span data-i18n="admin_next_in">New code in</span> <b id="adminCountdown">--:--</b></p>
     <div class="subnote center"><span data-i18n="admin_next_code">Next code:</span> <b id="adminNextCode">----</b></div>
     <div class="subnote center" id="facTagLine" style="margin-top:8px;"></div>
+    <div class="subnote" style="margin-top:12px;text-align:left;">
+      <b>🔗 Link buttons for students</b>
+      <div id="bookingStatus" style="margin:4px 0 8px;font-size:.85rem;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="ghostbtn" style="margin-top:0;padding:10px;" onclick="loadSheetButtons()">Refresh</button>
+        <a class="ghostbtn" id="linksEditBtn" style="margin-top:0;padding:10px;text-decoration:none;text-align:center;box-sizing:border-box;display:none;" target="_blank" rel="noopener noreferrer">Edit buttons</a>
+      </div>
+    </div>
     <button class="ghostbtn" onclick="adminEnterApp()" data-i18n="admin_enter">Enter the tool</button>
     <button class="ghostbtn" onclick="showDataPanel()">📊 Workshop data</button>
     <button class="ghostbtn" onclick="hideAdmin()" data-i18n="admin_close">Close panel</button>
@@ -396,22 +463,39 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
 
 <!-- ==================== MODE SELECT ==================== -->
 <section class="screen" id="scr-mode">
-  <h1 class="center"><span data-i18n="mode_title">What are we planning today?</span></h1>
+  <h1 class="center"><span id="modeTitle" data-i18n="before_start">Before we start</span></h1>
+  <div class="card center" id="ageGate" style="padding:22px 18px;">
+    <h2 style="margin:0 0 4px;" data-i18n="age_q">Are you 18 or older?</h2>
+    <div class="chiprow" style="margin-top:12px;justify-content:center;">
+      <button class="chip" id="ageYes" style="justify-content:center;text-align:center;" onclick="setAdult(true)"><span data-i18n="yes_word">Yes</span></button>
+      <button class="chip" id="ageNo" style="justify-content:center;text-align:center;" onclick="setAdult(false)"><span data-i18n="no_word">No</span></button>
+    </div>
+  </div>
+  <div id="modeCards" style="display:none;">
   <p class="sub center" data-i18n="mode_sub">Pick the one that sounds like you.</p>
   <button class="modecard" onclick="startWizard()">
     <span class="mc-emoji">🎯</span>
     <span>
-      <span class="mc-title" data-i18n="mode_this_year">I want to finish my credits this school year</span>
-      <div class="mc-sub" data-i18n="mode_this_year_sub">Build a week-by-week plan you can send to your teacher.</div>
+      <span class="mc-title" data-i18n="mode_this_year">I know how many credits I want to plan</span>
+      <div class="mc-sub" data-i18n="mode_this_year_sub">Build a week-by-week plan for this school year — or spread your credits across this school year and the next. You can add college classes and outside programs too.</div>
     </span>
   </button>
   <button class="modecard" onclick="showScreen('scr-planner');renderPlanner()">
     <span class="mc-emoji">🗺️</span>
     <span>
-      <span class="mc-title" data-i18n="mode_later">I'm graduating in a later year</span>
-      <div class="mc-sub" data-i18n="mode_later_sub">See a year-by-year map to graduation (230 credits).</div>
+      <span class="mc-title" data-i18n="mode_later">Show me my map to graduation</span>
+      <div class="mc-sub" data-i18n="mode_later_sub">Not sure how many credits to aim for? See a map of your school years to 230 credits, then send any school year's credits to the week-by-week planner.</div>
     </span>
   </button>
+  <button class="modecard" id="modeHiset" style="display:none;" onclick="startHiset()">
+    <span class="mc-emoji">📘</span>
+    <span>
+      <span class="mc-title" data-i18n="mode_hiset">I'm studying for the HiSET</span>
+      <div class="mc-sub" data-i18n="mode_hiset_sub">Build a simple week-by-week plan: 1 credit each week while you study for the HiSET.</div>
+    </span>
+  </button>
+  <p class="note center" style="margin-top:14px;"><span id="ageSummary"></span> · <a style="color:var(--accent);font-weight:700;cursor:pointer;" onclick="setAdult(null)" data-i18n="change">Change</a></p>
+  </div>
 </section>
 
 <!-- ==================== WIZARD ==================== -->
@@ -482,7 +566,7 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
         <div class="yeardivider" id="nyBreaksTitle"></div>
         <div id="nyBreaksList"></div>
         <div id="nyCustomSkipList"></div>
-        <button class="addbtn" onclick="addCustomSkip(true)" data-i18n="s3_add_custom_ny">+ Add a week off (next year)</button>
+        <button class="addbtn" onclick="addCustomSkip(true)" data-i18n="s3_add_custom_ny">+ Add a week off (next school year)</button>
       </div>
     </div>
   </div>
@@ -527,7 +611,7 @@ input.finput:focus,select.wsel:focus{border-color:var(--accent);}
 <section class="screen" id="scr-planner">
   <div class="card">
     <h2>🗺️ <span data-i18n="gp_title">Graduation Credit Planner</span></h2>
-    <p class="sub" data-i18n="gp_sub">Your year-by-year map to 230 credits.</p>
+    <p class="sub" data-i18n="gp_sub">Your map to 230 credits, one school year at a time.</p>
     <label class="flabel" data-i18n="gp_fresh">I started 9th grade in:</label>
     <select class="wsel" id="gpFreshSel" onchange="onGpInput()"></select>
     <label class="flabel" data-i18n="gp_remaining">Credits I still have remaining:</label>
@@ -2012,6 +2096,93 @@ const SESSION_MINUTES = 35;         // FIRM session length from unlock — locks
                                     //  check-out is never wiped mid-answer)
 const SESSION_WARN_MIN = 5;         // warning fires at minute 30 — right as the workshop wraps
 const TOTAL_GRAD_CREDITS = 230;
+/* LINK BUTTONS — the sheet links (LINKS_SHEET_URL, LINKS_SHEET_EDIT_URL) now
+   live in the SETTINGS block at the very top of this file. */
+
+/* Optional extra buttons written straight into this file (shown first). */
+const LINK_BUTTONS = [
+  /* { name:"Make an appointment with a counselor", nameEs:"Hacer una cita con un consejero/a", url:"https://..." }, */
+];
+const LINKS_CACHE_KEY = "wcc_sheet_buttons";   /* last list read from the sheet, used if a load fails */
+const MAX_LINK_BUTTONS = 12;
+let SHEET_BUTTONS = [], sheetStatus = {state:"off", at:0};
+function cleanBookingUrl(u){
+  u=String(u||"").trim();
+  if(!/^https:\/\/[^\s"'<>]+$/i.test(u))return "";   /* https links only */
+  return u;
+}
+function escHtml(x){ return String(x||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+/* accepts the "Publish to web" link in any of the forms Google hands out */
+function sheetCsvUrl(){
+  let u=cleanBookingUrl(LINKS_SHEET_URL); if(!u)return "";
+  if(/\/pubhtml/.test(u))u=u.replace(/\/pubhtml/,"/pub");
+  if(/\/pub(\?|$)/.test(u)&&!/output=csv/.test(u))u+=(u.indexOf("?")>-1?"&":"?")+"output=csv";
+  const m=u.match(/^https:\/\/docs\.google\.com\/spreadsheets\/d\/([A-Za-z0-9_-]{20,})\/(edit|view)?/);
+  if(m&&!/\/d\/e\//.test(u))u="https://docs.google.com/spreadsheets/d/"+m[1]+"/gviz/tq?tqx=out:csv";
+  return u;
+}
+function parseCsv(text){
+  const rows=[]; let row=[], cell="", q=false;
+  text=String(text||"").replace(/^﻿/,"");
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; } else cell+=ch; }
+    else if(ch==='"')q=true;
+    else if(ch===","){row.push(cell);cell="";}
+    else if(ch==="\n"||ch==="\r"){ if(ch==="\r"&&text[i+1]==="\n")i++; row.push(cell);cell=""; rows.push(row);row=[]; }
+    else cell+=ch;
+  }
+  row.push(cell); rows.push(row);
+  return rows;
+}
+function rowsToButtons(rows){
+  const out=[], seen=new Set();
+  rows.forEach(r=>{
+    const name=String(r[0]||"").trim().slice(0,80), url=cleanBookingUrl(r[1]), nameEs=String(r[2]||"").trim().slice(0,80);
+    if(!name||!url||seen.has(url)||out.length>=MAX_LINK_BUTTONS)return;   /* header and blank rows drop out here */
+    seen.add(url); out.push({name,nameEs,url});
+  });
+  return out;
+}
+function loadSheetCache(){
+  try{ const o=JSON.parse(localStorage.getItem(LINKS_CACHE_KEY)); if(o&&Array.isArray(o.list)){ SHEET_BUTTONS=rowsToButtons(o.list.map(b=>[b.name,b.url,b.nameEs])); return o.at||0; } }catch(e){}
+  return 0;
+}
+/* read the sheet; on any failure keep showing the last list that loaded */
+async function loadSheetButtons(){
+  const u=sheetCsvUrl();
+  if(!u){ SHEET_BUTTONS=[]; sheetStatus={state:"off",at:0}; refreshLinkSlots(); return; }
+  const cachedAt=loadSheetCache(); refreshLinkSlots();
+  try{
+    const res=await fetch(u+(u.indexOf("?")>-1?"&":"?")+"_="+Date.now(),{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    const text=await res.text();
+    if(/^\s*<(!doctype|html)/i.test(text))throw new Error("not a published sheet");
+    SHEET_BUTTONS=rowsToButtons(parseCsv(text));
+    sheetStatus={state:"ok",at:Date.now()};
+    try{ localStorage.setItem(LINKS_CACHE_KEY,JSON.stringify({at:sheetStatus.at,list:SHEET_BUTTONS})); }catch(e){}
+  }catch(e){
+    sheetStatus={state:"fail",at:cachedAt,err:String(e&&e.message||e)};
+  }
+  refreshLinkSlots();
+  if(typeof renderBookingStatus==="function")renderBookingStatus();
+}
+/* buttons written in the file first, then the sheet's; a link is never shown twice */
+function linkButtons(){
+  const out=[], seen=new Set();
+  LINK_BUTTONS.forEach(b=>{ const u=cleanBookingUrl(b&&b.url); if(u&&!seen.has(u)){seen.add(u);out.push({name:b.name||"",nameEs:b.nameEs||"",url:u,src:"file"});} });
+  SHEET_BUTTONS.forEach(b=>{ if(!seen.has(b.url)){seen.add(b.url);out.push({name:b.name,nameEs:b.nameEs,url:b.url,src:"sheet"});} });
+  return out.slice(0,MAX_LINK_BUTTONS);
+}
+function linkBtnLabel(b){ return (LANG==="es"&&b.nameEs)?b.nameEs:(b.name||t("book_btn")); }
+function linkButtonsInner(){
+  const list=linkButtons(); if(!list.length)return "";
+  return list.map(b=>'<a class="ghostbtn bookbtn no-print" href="'+escHtml(b.url)+'" target="_blank" rel="noopener noreferrer">'+escHtml(linkBtnLabel(b))+'</a>').join("")
+    +'<p class="note center no-print" style="margin:6px 0 0;">'+t(list.length>1?"book_note_many":"book_note")+'</p>';
+}
+/* a slot on the page; it fills in (or updates) when the sheet finishes loading */
+function bookingBtnHtml(){ return '<div class="linkslot">'+linkButtonsInner()+'</div>'; }
+function refreshLinkSlots(){ document.querySelectorAll(".linkslot").forEach(el=>{ el.innerHTML=linkButtonsInner(); }); }
 
 /* =====================================================================
    ROTATING ACCESS CODE (deterministic, offline — same code on every
@@ -2059,10 +2230,39 @@ const T = {
   admin_close:["Close panel","Cerrar panel"],
   mode_title:["What are we planning today?","¿Qué vamos a planear hoy?"],
   mode_sub:["Pick the one that sounds like you.","Elige la opción que te describa."],
-  mode_this_year:["I want to finish my credits this school year","Quiero terminar mis créditos este año escolar"],
-  mode_this_year_sub:["Build a week-by-week plan you can send to your teacher.","Crea un plan semana por semana que puedes enviar a tu maestro."],
-  mode_later:["I'm graduating next school year or later","Me voy a graduar el próximo año escolar o después"],
-  mode_later_sub:["See a year-by-year map to graduation (230 credits).","Mira un mapa año por año hacia la graduación (230 créditos)."],
+  mode_this_year:["I know how many credits I want to plan","Sé cuántos créditos quiero planear"],
+  mode_this_year_sub:["Build a week-by-week plan for this school year — or spread your credits across this school year and the next. You can add college classes and outside programs too.","Crea un plan semana por semana para este año escolar — o reparte tus créditos entre este año escolar y el próximo. También puedes agregar clases de colegio y programas externos."],
+  mode_later:["Show me my map to graduation","Muéstrame mi mapa hacia la graduación"],
+  mode_later_sub:["Not sure how many credits to aim for? See a map of your school years to 230 credits, then send any school year's credits to the week-by-week planner.","¿No sabes cuántos créditos necesitas? Mira un mapa de tus años escolares hacia 230 créditos y luego envía los créditos de cualquier año escolar a la calculadora."],
+  before_start:["Before we start","Antes de empezar"],
+  age_sum_yes:["18 or older: Yes","18 años o más: Sí"],
+  age_sum_no:["18 or older: No","18 años o más: No"],
+  age_q:["Are you 18 or older?","¿Tienes 18 años o más?"],
+  yes_word:["Yes","Sí"], no_word:["No","No"],
+  mode_hiset:["I'm studying for the HiSET","Estoy estudiando para el HiSET"],
+  mode_hiset_sub:["Build a simple week-by-week plan: 1 credit each week while you study for the HiSET.","Crea un plan sencillo semana por semana: 1 crédito cada semana mientras estudias para el HiSET."],
+  hs_s2_title:["How far out do you want to plan?","¿Hasta cuándo quieres planear?"],
+  hs_finish_label:["Plan through","Planear hasta"],
+  hs_back:["← Back","← Atrás"],
+  hs_note:["📘 HiSET students complete 1 credit each week while they study. Pick how far out you'd like your plan to go — you can always come back and extend it.","📘 Los estudiantes de HiSET completan 1 crédito cada semana mientras estudian. Elige hasta cuándo quieres tu plan — siempre puedes volver y extenderlo."],
+  hs_results_title:["📘 Your HiSET pace","📘 Tu ritmo de HiSET"],
+  hs_pace_big:["1 credit every week","1 crédito cada semana"],
+  hs_results_sub:["<b>{w} weeks</b> · at least <b>{w} credits</b><br>{a} → {b}","<b>{w} semanas</b> · al menos <b>{w} créditos</b><br>{a} → {b}"],
+  hs_results_note:["One credit a week keeps you right on track while you study for the HiSET. A steady pace, one week at a time — you've got this.","Un crédito por semana te mantiene al día mientras estudias para el HiSET. Un ritmo constante, una semana a la vez — tú puedes."],
+  hs_see_plan:["See my week-by-week plan →","Ver mi plan semana por semana →"],
+  hs_plan_name:["HiSET pace · 1 credit per week","Ritmo HiSET · 1 crédito por semana"],
+  hs_minimum:["Minimum","Mínimo"],
+  hs_tracker_tip:["Each week has 1 credit. Tap + any time you'd like to do more in a week.","Cada semana tiene 1 crédito. Toca + cuando quieras hacer más en una semana."],
+  tr_blocked:["✨ Almost there — <b>{n}</b> more credit(s) to place. Tap + on any week until “Left” reaches 0, and your plan will be ready to download.","✨ Ya casi — faltan <b>{n}</b> crédito(s) para colocar. Toca + en cualquier semana hasta que “Faltan” llegue a 0, y tu plan estará listo para descargar."],
+  tr_blocked_toast:["Almost there — place your last credits first","Ya casi — primero coloca tus últimos créditos"],
+  book_btn:["Make an appointment with a counselor","Hacer una cita con un consejero/a"],
+  book_note_many:["These open in a new tab, so your plan stays right here.","Se abren en otra pestaña, así tu plan se queda aquí."],
+  book_note:["This opens in a new tab, so your plan stays right here.","Se abre en otra pestaña, así tu plan se queda aquí."],
+  adj_title:["✏️ Want to change something?","✏️ ¿Quieres cambiar algo?"],
+  adj_credits:["🔢 Credits","🔢 Créditos"],
+  adj_finish:["📅 Finish line / next school year","📅 Meta / próximo año escolar"],
+  adj_breaks:["😌 Breaks","😌 Descansos"],
+  adj_extras:["🏫 Add a college class or outside program","🏫 Agregar clase de colegio o programa externo"],
   step:["Step","Paso"],
   s1_title:["How many credits do you need to finish?","¿Cuántos créditos necesitas completar?"],
   s1_sub:["Not sure? Ask your teacher — then come back.","¿No estás seguro? Pregunta a tu maestro y regresa."],
@@ -2075,13 +2275,13 @@ const T = {
   s3_title:["Weeks you plan to skip 😌","Semanas que planeas omitir 😌"],
   s3_sub:["If your pace allows it, we've already switched on the breaks you can afford. Flip any off if you plan to work through them.","Si tu ritmo lo permite, ya activamos los descansos que puedes tomar. Desactiva los que planeas trabajar."],
   s3_add_custom:["+ Add another week off (trip, work, life...)","+ Agregar otra semana libre (viaje, trabajo...)"],
-  s3_add_custom_ny:["+ Add a week off (next year)","+ Agregar una semana libre (próximo año)"],
+  s3_add_custom_ny:["+ Add a week off (next school year)","+ Agregar una semana libre (próximo año escolar)"],
   s4_title:["Earning credits anywhere else?","¿Ganarás créditos en otro lugar?"],
   s4_sub:["Most students skip this step. Only open these if they apply to you.","La mayoría de estudiantes omite este paso. Ábrelos solo si aplican a ti."],
   s4_de_title:["College class (dual enrollment)","Clase de colegio (doble inscripción)"],
   s4_op_title:["Outside program (e.g. Grizzly Youth Academy)","Programa externo (ej. Grizzly Youth Academy)"],
   gp_title:["Graduation Credit Planner","Planificador de Créditos de Graduación"],
-  gp_sub:["Your year-by-year map to 230 credits.","Tu mapa año por año hacia 230 créditos."],
+  gp_sub:["Your map to 230 credits, one school year at a time.","Tu mapa hacia 230 créditos, un año escolar a la vez."],
   gp_fresh:["I started 9th grade in:","Empecé el 9º grado en:"],
   gp_remaining:["Credits I still have remaining:","Créditos que aún me quedan:"],
   next:["Next →","Siguiente →"],
@@ -2108,7 +2308,7 @@ const T = {
   sem1_end:["Semester 1 end","Fin del semestre 1"],
   year_end:["End of school year","Fin del año escolar"],
   custom:["Custom...","Personalizado..."],
-  cross_note:["Your plan will run to the end of this school year, then continue into next year.","Tu plan llegará al final de este año escolar y continuará el próximo año."],
+  cross_note:["Your plan will run to the end of this school year, then continue into next school year.","Tu plan llegará al final de este año escolar y continuará el próximo año escolar."],
   next_year_notice:["You're planning for the {y} school year.","Estás planeando para el año escolar {y}."],
   brk_w1:["Week 1 is a short week — skip it","La Semana 1 es corta — sáltala"],
   brk_tg:["🦃 Thanksgiving week (Week 22)","🦃 Semana de Acción de Gracias (Semana 22)"],
@@ -2120,7 +2320,7 @@ const T = {
   op_name:["Program name (optional)","Nombre del programa (opcional)"],
   timing_q:["When does it take place?","¿Cuándo toma lugar?"],
   timing_cur:["This school year only","Solo este año escolar"],
-  timing_cross:["Starts this year, continues next year","Empieza este año, continúa el próximo"],
+  timing_cross:["Starts this school year, continues next school year","Empieza este año escolar, continúa el próximo año escolar"],
   timing_next:["Next school year","El próximo año escolar"],
   start_wk:["Start week","Semana de inicio"],
   end_wk:["End week","Semana final"],
@@ -2172,7 +2372,6 @@ const T = {
   plus_week_of:[" + 1 week of {n}"," + 1 semana de {n}"],
   planD_desc:["3/week for 8 weeks unlocks a 4-credit/week max. For students in a hurry — with support.","3/semana por 8 semanas desbloquea un máximo de 4/semana. Para estudiantes con prisa — con apoyo."],
   planD_detail:["3/wk × 8 weeks, then {x} week(s) of 4{rem} — {t} weeks total","3/sem × 8 semanas, luego {x} semana(s) de 4{rem} — {t} semanas en total"],
-  share_sum_pdf:["📤 Send my summary (PDF)","📤 Enviar mi resumen (PDF)"],
   dl_sum_pdf:["📄 Download my summary (PDF)","📄 Descargar mi resumen (PDF)"],
   tracker_back:["← All plans","← Todos los planes"],
   target:["Target","Meta"],
@@ -2183,10 +2382,8 @@ const T = {
   reset_plan:["↺ Suggested plan","↺ Plan sugerido"],
   clear_all:["Clear all","Borrar todo"],
   dl_pdf:["📄 Download my plan (PDF)","📄 Descargar mi plan (PDF)"],
-  share_pdf:["📤 Send my plan (PDF)","📤 Enviar mi plan (PDF)"],
   pdf_working:["Building your PDF…","Creando tu PDF…"],
   pdf_done:["✅ PDF downloaded! Attach it to an email to your teacher.","✅ ¡PDF descargado! Adjúntalo a un correo para tu maestro."],
-  pdf_share_done:["✅ Sent!","✅ ¡Enviado!"],
   pdf_fail:["Couldn't build the PDF on this device — use Print instead.","No se pudo crear el PDF en este dispositivo — usa Imprimir."],
   print_plan:["🖨️ Print","🖨️ Imprimir"],
   eb_avg:["Average pace","Ritmo promedio"],
@@ -2196,20 +2393,20 @@ const T = {
   gp_select:["-- Select --","-- Seleccionar --"],
   gp_classof:["Class of","Clase de"],
   gp_earned:["Credits earned:","Créditos obtenidos:"],
-  gp_curyear:["Current Year:","Año actual:"],
+  gp_curyear:["Current School Year:","Año escolar actual:"],
   gp_year:["Year","Año"],
   gp_ready:["🎓 No credits remaining — ready to graduate!","🎓 ¡No quedan créditos — listo/a para graduarse!"],
-  gp_valid_year:["Please select a valid freshman start year.","Por favor selecciona un año de inicio válido."],
+  gp_valid_year:["Please select the school year you started 9th grade.","Por favor selecciona el año escolar en que empezaste el 9.º grado."],
   gp_valid_range:["Please enter a number between 1 and 230.","Ingresa un número entre 1 y 230."],
   gp_opt1:["Option 1: Traditional Plan — Class of {y}","Opción 1: Plan Tradicional — Clase de {y}"],
-  gp_opt2:["Option 2: Add a Year — Class of {y}","Opción 2: Añadir un Año — Clase de {y}"],
+  gp_opt2:["Option 2: Add a School Year — Class of {y}","Opción 2: Añadir un Año Escolar — Clase de {y}"],
   gp_wont_fit:["({n} credits won't fit)","({n} créditos no caben)"],
   gp_or:["— Or —","— O —"],
   gp_counselor_t:["Talk with your school counselor","Habla con tu consejero/a escolar"],
   gp_longer_ok:["💬 A longer plan still gets you there — a diploma is a diploma. Before you decide anything, set up an appointment with your school counselor or talk with your teacher. Together you can look at every option — college classes, outside programs, or whether a faster pace is realistic for you — and choose what fits your life.","💬 Un plan más largo también te lleva a la meta — un diploma es un diploma. Antes de decidir, agenda una cita con tu consejero/a escolar o habla con tu maestro. Juntos pueden revisar todas las opciones — clases de colegio, programas externos, o si un ritmo más rápido es realista para ti — y elegir lo que mejor se adapte a tu vida."],
   gp_counselor:["Finishing on time will need a customized plan with extra support. Set up an appointment soon so you can design the best path together.","Para terminar a tiempo necesitarás un plan personalizado con apoyo extra. Agenda una cita pronto para diseñar juntos el mejor camino."],
-  gp_remainder:["(Remainder)","(Resto del año)"],
-  gp_fullyear:["(Full year)","(Año completo)"],
+  gp_remainder:["(Remainder)","(Resto del año escolar)"],
+  gp_fullyear:["(Full school year)","(Año escolar completo)"],
   gp_gradyear:["— Graduation Year","— Graduación"],
   gp_postgya:["(2nd semester, post-GYA)","(2do semestre, post-GYA)"],
   gp_weeks_rem:["Weeks remaining:","Semanas restantes:"],
@@ -2218,13 +2415,51 @@ const T = {
   gp_running:["Running total:","Acumulado:"],
   gp_benchmark:["Benchmark:","Meta:"],
   gp_bonus:["⏭️ Your plan starts next week. Any credits you finish this week are a bonus.","⏭️ Tu plan inicia la próxima semana. Los créditos que completes esta semana son un extra."],
+  rt_left:["Credits left:","Créditos restantes:"],
+  rt_years:["Years to finish:","Años para terminar:"],
+  rt_title:["🎓 Your path to your diploma","🎓 Tu camino hacia tu diploma"],
+  rt_intro:["You have <b>{n} credits</b> left. Here's a plan that keeps you at a steady pace. Years are counted from this school year.","Te quedan <b>{n} créditos</b>. Aquí tienes un plan con un ritmo constante. Los años se cuentan a partir de este año escolar."],
+  rt_plan:["Your Graduation Plan — Class of {y}","Tu plan de graduación — Clase de {y}"],
+  rt_curyear:["Current School Year","Año escolar actual"],
+  rt_use_cur:["Use {n} credits in the calculator → Current School Year","Usar {n} créditos en la calculadora → Año escolar actual"],
+  rt_use_two:["Use {n} credits in the calculator → Current School Year + Year 2","Usar {n} créditos en la calculadora → Año escolar actual + Año 2"],
+  rt_fast:["💬 This plan moves quickly. Your counselor or teacher can help you add college classes or outside programs to lighten the load — set up an appointment and build the best plan together.","💬 Este plan avanza rápido. Tu consejero/a o maestro/a puede ayudarte a agregar clases de colegio o programas externos para aligerar la carga — agenda una cita y armen juntos el mejor plan."],
+  rt_tip:["It's a great idea to check in with your counselor or teacher about your plan.","Es buena idea revisar tu plan con tu consejero/a o maestro/a."],
+  gp_cmp_opt2:["Option 2","de la Opción 2"],
+  gp_cmp_main:["the first plan","del primer plan"],
+  gp_cmp_two:["<b>How is this different from {o}?</b> Both finish at the same time. Here you complete {d} more credits this school year, so next school year is lighter: about {a} credits a week instead of {b}. That means more 1-credit weeks next school year.","<b>¿En qué se diferencia {o}?</b> Ambos terminan al mismo tiempo. Aquí completas {d} créditos más este año escolar, así que el próximo año escolar es más ligero: unos {a} créditos por semana en vez de {b}. Eso significa más semanas de 1 crédito el próximo año escolar."],
+  gp_cmp_multi:["<b>How is this different from {o}?</b> Both finish at the same time. Here you complete {d} more credits this school year, so the school years after it are lighter.","<b>¿En qué se diferencia {o}?</b> Ambos terminan al mismo tiempo. Aquí completas {d} créditos más este año escolar, así que los años escolares siguientes son más ligeros."],
+  gl_title:["Your options at a glance","Tus opciones de un vistazo"],
+  gl_hint:["Tap an option to see its full plan.","Toca una opción para ver su plan completo."],
+  gl_pace:["{p} credits a week","{p} créditos por semana"],
+  gl_pace_upto:["up to {p} credits a week","hasta {p} créditos por semana"],
+  gl_strong:["2 credits a week this school year, then {p} credits a week","2 créditos por semana este año escolar, luego {p} créditos por semana"],
+  gl_finish:["Finish {d}","Terminas en {d}"],
+  gl_gya:["One-semester program · Up to 60 credits","Programa de un semestre · Hasta 60 créditos"],
+  de_need_q:["Does this class cover credits you still need this school year?","¿Esta clase cubre créditos que todavía necesitas este año escolar?"],
+  de_need_yes:["Yes, count it toward my credits","Sí, cuéntala en mis créditos"],
+  de_need_no:["No, or I'm not sure. Keep it as extra","No, o no estoy seguro/a. Déjala como extra"],
+  de_need_note:["A college class can cover a class you still need, like English, or count as an elective. If you already have enough of that kind of credit, it's extra: still a boost toward graduation. Not sure? Your teacher can tell you from your credit check.","Una clase de colegio puede cubrir una clase que todavía necesitas, como Inglés, o contar como electiva. Si ya tienes suficientes créditos de ese tipo, es extra: igual es un impulso hacia la graduación. ¿No estás seguro/a? Tu maestro puede decírtelo con tu revisión de créditos."],
+  de_extra:["{n} extra credits, on top of your plan ({r})","{n} créditos extra, además de tu plan ({r})"],
+  gp_count_note:["📋 Good to know: This map counts your credits by number. Your credit check shows exactly which classes you still need, so look at both together with your teacher.","📋 Bueno saber: Este mapa cuenta tus créditos por número. Tu revisión de créditos muestra exactamente qué clases te faltan, así que revisa ambos junto con tu maestro."],
+  gp_paths:["🌟 You have {n} ways to reach your diploma. Look them over and pick the one that fits your life.","🌟 Tienes {n} caminos hacia tu diploma. Revísalos y elige el que mejor se ajuste a tu vida."],
+  gp_option_n:["Option {n}: ","Opción {n}: "],
+  gp_catch_title:["Strong Start — Class of {y}","Buen arranque — Clase de {y}"],
+  gp_catch_sub:["2 credits a week for the rest of this school year, then an easier pace — and you still finish in time for the graduation ceremony.","2 créditos por semana el resto de este año escolar, luego un ritmo más tranquilo — y aun así terminas a tiempo para la ceremonia de graduación."],
+  gp_in_time:["✅ In time for the graduation ceremony (Week 46 deadline)","✅ A tiempo para la ceremonia de graduación (fecha límite: Semana 46)"],
+  gp_after46:["🎓 Good to know: The graduation ceremony deadline only decides whether you can walk in the ceremony. Your true graduation is the day you finish all your credits. This plan finishes after the Week 46 ceremony deadline, so ask your teacher about your ceremony options.","🎓 Bueno saber: La fecha límite de la ceremonia solo decide si puedes participar en la ceremonia. Tu verdadera graduación es el día que termines todos tus créditos. Este plan termina después de la fecha límite de la ceremonia (Semana 46), así que pregunta a tu maestro por tus opciones de ceremonia."],
+  gp_fast_title:["Faster Pace — Class of {y}","Ritmo más rápido — Clase de {y}"],
+  gp_fast_sub:["Want to finish sooner? A steady 2 credits a week gets you there, with your school breaks still open.","¿Quieres terminar antes? Un ritmo constante de 2 créditos por semana te lleva a la meta, con tus descansos escolares libres."],
+  gp_fast_meta:["2 cr/week","2 cr/semana"],
+  gp_fast_breaks:["😌 {n} break week(s) off","😌 {n} semana(s) de descanso"],
+  gp_fast_done:["🎓 Finished by Week {w} · {d}","🎓 Terminas en la Semana {w} · {d}"],
   gp_use:["Use {n} credits in the calculator → Year {y}","Usar {n} créditos en la calculadora → Año {y}"],
   gp_use2:["Use {n} credits in the calculator → Years {a} + {b}","Usar {n} créditos en la calculadora → Años {a} + {b}"],
   gp_gya_t:["Option 3: Grizzly Youth Academy (GYA)","Opción 3: Grizzly Youth Academy (GYA)"],
   gp_gya_p:["GYA is a one-semester program awarding up to 60 credits (one time only, ages 16–18). Cohorts start each July and January.","GYA es un programa de un semestre que otorga hasta 60 créditos (una sola vez, edades 16–18). Los cohortes comienzan en julio y enero."],
   gp_gya_win:["📅 Upcoming cohort windows:","📅 Próximas ventanas de cohorte:"],
   gp_gya_after:["If you complete GYA, the 4-year plan looks like this:","Si completas GYA, el plan de 4 años se vería así:"],
-  gp_gya_ok:["✅ With GYA, every year stays at a sustainable pace (≤ 2 cr/wk).","✅ Con GYA, todos los años mantienen un ritmo sostenible (≤ 2 cr/sem)."],
+  gp_gya_ok:["✅ With GYA, every school year stays at a sustainable pace (≤ 2 cr/wk).","✅ Con GYA, todos los años escolares mantienen un ritmo sostenible (≤ 2 cr/sem)."],
   gp_gya_sem:["GYA Semester (Year {y})","Semestre GYA (Año {y})"],
   gp_gya_wk:["Weeks 1–30 (Semester 1)","Semanas 1–30 (Semestre 1)"],
   gp_gya_credits:["GYA credits","créditos GYA"],
@@ -2269,6 +2504,10 @@ const T = {
   tg_lc:["Thanksgiving week","la semana de Acción de Gracias"],
   winter_lc:["Winter break","las vacaciones de invierno"],
   spring_lc:["Spring week","la semana de primavera"],
+  summer_week:["Summer Week","Semana de verano"],
+  summer_lc:["Summer weeks","las semanas de verano"],
+  brk_summer:["Summer weeks (Weeks {a}–{b})","Semanas de verano (Semanas {a}–{b})"],
+  limited_heads:["Limited teacher appointments — plan ahead","Citas limitadas con maestros — planea con anticipación"],
   and_word:["and","y"],
   bi_intro:["⚠️ Taking {names} means your credits won't all fit by your finish line — you'd finish about {n} week(s) later","⚠️ Tomar {names} hará que tus créditos no quepan antes de tu meta — terminarías unas {n} semana(s) después"],
   bi_past46:["— that's past the graduation ceremony credit deadline.","— eso es después de la fecha límite de créditos para la ceremonia de graduación."],
@@ -2277,7 +2516,7 @@ const T = {
   bi_generic:["— later than the finish week you picked.","— después de la semana final que elegiste."],
   bi_choice:["It's your call — rest matters too. If you keep the break, talk with your teacher about adjusting your plan.","Tú decides — descansar también importa. Si mantienes el descanso, habla con tu maestro para ajustar tu plan."],
   pp_mix:["Week mix:","Mezcla de semanas:"],
-  crossyear_auto:["Next-year planning was turned on for you (see Step 2).","Se activó la planificación del próximo año (mira el Paso 2)."],
+  crossyear_auto:["Planning for next school year was turned on for you (see Step 2).","Se activó la planificación del próximo año escolar (mira el Paso 2)."],
   pp_total:["Total planned","Total planeado"],
   pp_footer:["NOT AN OFFICIAL SCHOOL DOCUMENT — planning tool only · printed ","NO ES UN DOCUMENTO OFICIAL DE LA ESCUELA — solo una herramienta de planificación · impreso "],
   spare:["You have {n} spare week(s) — life happens, you're covered.","Te sobran {n} semana(s) — si algo pasa, estás cubierto."],
@@ -2358,14 +2597,15 @@ function defaultState(){
   return {
     yearMode:"current", credits:null, startWeek:1, endWeek:46,
     crossYear:false, endWeekNext:46, customEnd:false,
-    skipW1:true, skipTG:false, skipWinter:false, skipSpring:false,
-    nySkipW1:true, nySkipTG:false, nySkipWinter:false, nySkipSpring:false,
+    skipW1:true, skipTG:false, skipWinter:false, skipSpring:false, skipSummer:false,
+    nySkipW1:true, nySkipTG:false, nySkipWinter:false, nySkipSpring:false, nySkipSummer:false,
     customSkips:[], nyCustomSkips:[],
     userToggled:{},
     deOn:false, opOn:false,
     de:[null,null], op:[null,null],
     chosenPlan:null, trackerVals:null,
-    gpFreshman:"", gpCredits:""
+    gpFreshman:"", gpCredits:"",
+    adult:null, hiset:false, planContinues:false
   };
 }
 function activeStartYear(){ return getCurrentSchoolYear() + (S.yearMode==="next"?1:0); }
@@ -2456,14 +2696,34 @@ function autoSetHealthySkips(){
     {key:"tg",      field:"skipTG",      weeks:1, ok:inRange(22,false)},
     {key:"nyTg",    field:"nySkipTG",    weeks:1, ok:S.crossYear&&inRange(22,true)},
     {key:"spring",  field:"skipSpring",  weeks:1, ok:inRange(41,false)},
-    {key:"nySpring",field:"nySkipSpring",weeks:1, ok:S.crossYear&&inRange(41,true)}
+    {key:"nySpring",field:"nySkipSpring",weeks:1, ok:S.crossYear&&inRange(41,true)},
+    {key:"summer",  field:"skipSummer",  weeks:3, ok:summerWeeks(SY).every(w=>inRange(w,false))},
+    {key:"nySummer",field:"nySkipSummer",weeks:3, ok:S.crossYear&&summerWeeks(NY).every(w=>inRange(w,true))}
   ];
+  if(S.hiset){
+    /* HiSET = at least 1 credit every week, but the rule is paused during
+       Winter Break and the limited weeks (Thanksgiving, Spring, Summer):
+       all of them are skipped by default; the student can switch any off */
+    cands.forEach(c=>{ if(S.userToggled[c.key])return; S[c.field]=c.ok; });
+    return;
+  }
   cands.forEach(c=>{ if(!c.ok)return; if(!S.userToggled[c.key])return; if(S[c.field]) budget-=c.weeks; });
   cands.forEach(c=>{
     if(!c.ok)return; if(S.userToggled[c.key])return;
     if(budget>=c.weeks){ S[c.field]=true; budget-=c.weeks; } else { S[c.field]=false; }
   });
 }
+/* Summer weeks = the last three weeks of a school year (normally 50–52).
+   Computed from the year's own week count so it stays right every year. */
+function summerWeeks(sy){ const n=sy.totalWeeks; return [n-2,n-1,n]; }
+/* Thanksgiving, Spring and Summer weeks always have limited teacher
+   appointments — whether or not the student plans to skip them */
+/* the calendar names Thanksgiving, Winter and Spring weeks itself; the last
+   three weeks get their "Summer Week" name here so they read the same way */
+function withSummer(note,sy,aw){
+  return summerWeeks(sy).includes(aw)?t("summer_week")+(note?" · "+note:""):note;
+}
+function isLimitedWeek(sy,aw){ return aw===22||aw===41||summerWeeks(sy).includes(aw); }
 function w1Applicable(){ return SY.week1Partial && S.startWeek===1; }
 function nyW1Applicable(){ return S.crossYear && NY.week1Partial && effectiveEndWeek()>=SY.totalWeeks+1; }
 
@@ -2474,7 +2734,7 @@ function nyW1Applicable(){ return S.crossYear && NY.week1Partial && effectiveEnd
    ===================================================================== */
 const PLAN_MAP={A:"C",B:"A",C:"B",D:"D"};  // display -> engine
 function compute(){
-  const totalCredits=S.credits;
+  let totalCredits=S.credits;
   const startWeek=S.startWeek;
   const endWeek=effectiveEndWeek();
   if(!totalCredits||totalCredits<=0||!(endWeek>=startWeek)) return {valid:false};
@@ -2486,12 +2746,14 @@ function compute(){
   if(S.skipTG) allSkips.push(22);
   if(S.skipWinter){allSkips.push(26,27);}
   if(S.skipSpring) allSkips.push(41);
+  if(S.skipSummer) allSkips.push(...summerWeeks(SY));
   S.customSkips.forEach(c=>{ if(c.on) allSkips.push(c.week); });
   if(S.crossYear){
     if(nyW1Applicable()&&S.nySkipW1) allSkips.push(totalCurrent+1);
     if(S.nySkipTG) allSkips.push(totalCurrent+22);
     if(S.nySkipWinter){allSkips.push(totalCurrent+26,totalCurrent+27);}
     if(S.nySkipSpring) allSkips.push(totalCurrent+41);
+    if(S.nySkipSummer) summerWeeks(NY).forEach(w=>allSkips.push(totalCurrent+w));
     S.nyCustomSkips.forEach(c=>{ if(c.on) allSkips.push(totalCurrent+c.week); });
   }
   const uniqueSkips=[...new Set(allSkips)].filter(w=>w>=startWeek&&w<=endWeek);
@@ -2513,6 +2775,8 @@ function compute(){
   const allSkipsWithOp=[...new Set([...uniqueSkips,...opSkipWeeks])];
   const weeksRemaining=endWeek-startWeek+1-allSkipsWithOp.length;
   if(weeksRemaining<=0) return {valid:false};
+  /* HiSET: the goal IS one credit per working week */
+  if(S.hiset){ totalCredits=weeksRemaining; S.credits=weeksRemaining; }
   /* ---- range validation ---- */
   const rangeErrors=[];
   function checkRange(cls,label){
@@ -2534,7 +2798,8 @@ function compute(){
   checkRange(op2,esc(op2.name)||(LANG==="es"?"Programa externo 2":"Outside program 2"));
   if(rangeErrors.length) return {valid:false,rangeErrors};
   /* ---- adjusted credits ---- */
-  const deSub=(de1.active?de1.credits:0)+(de2.active?de2.credits:0);
+  /* a college class only reduces the plan when the student still needs those elective credits */
+  const deSub=(de1.active&&S.de[0]&&S.de[0].counts?de1.credits:0)+(de2.active&&S.de[1]&&S.de[1].counts?de2.credits:0);
   const opSub=(op1.active?op1.credits:0)+(op2.active?op2.credits:0);
   const C=Math.max(0,totalCredits-deSub-opSub);
   const W=weeksRemaining;
@@ -2547,12 +2812,16 @@ function compute(){
   else if(avg<3.00){riskKey="risk_high";riskCls="warn";}
   else{riskKey="risk_max";riskCls="bad";}
   /* ---- buffer warnings (preserved) ---- */
+  /* the finishing week is judged in the school year the plan ENDS in, so a
+     plan that continues into next school year gets the same messages */
   let bufferKey="";
-  if(endWeek===46)bufferKey="buffer44";
-  else if(endWeek===45)bufferKey="buffer45";
-  else if(endWeek>46&&!S.crossYear){
+  const finWk=S.crossYear?S.endWeekNext:endWeek;
+  if(finWk===46)bufferKey="buffer44";
+  else if(finWk===45)bufferKey="buffer45";
+  else if(finWk>46){
     const gpFY=parseInt(S.gpFreshman);
-    if(gpFY&&activeStartYear()>=gpFY+3)bufferKey="bufferAfter46";
+    const thisYearShare=S.planContinues&&!S.crossYear&&endWeek===SY.totalWeeks;
+    if(gpFY&&activeStartYear()+(S.crossYear?1:0)>=gpFY+3&&!thisYearShare)bufferKey="bufferAfter46";
   }
   /* ---- week list (for plans + tracker) ---- */
   /* classify skipped weeks: winter = full school break; Thanksgiving &
@@ -2560,10 +2829,12 @@ function compute(){
   const limitedSet=new Set(), fullBreakSet=new Set();
   if(S.skipTG)limitedSet.add(22);
   if(S.skipSpring)limitedSet.add(41);
+  if(S.skipSummer)summerWeeks(SY).forEach(w=>limitedSet.add(w));
   if(S.skipWinter){fullBreakSet.add(26);fullBreakSet.add(27);}
   if(S.crossYear){
     if(S.nySkipTG)limitedSet.add(totalCurrent+22);
     if(S.nySkipSpring)limitedSet.add(totalCurrent+41);
+    if(S.nySkipSummer)summerWeeks(NY).forEach(w=>limitedSet.add(totalCurrent+w));
     if(S.nySkipWinter){fullBreakSet.add(totalCurrent+26);fullBreakSet.add(totalCurrent+27);}
   }
   const weekList=[];
@@ -2573,7 +2844,8 @@ function compute(){
     const inOP1=isWeekInX(op1,w,isCur,aw), inOP2=isWeekInX(op2,w,isCur,aw);
     const hardSkip=softSkip?false:(uniqueSkips.includes(w)||inOP1||inOP2);
     const skipKind=hardSkip?((inOP1||inOP2)?"op":limitedSet.has(w)?"limited":fullBreakSet.has(w)?"break":"custom"):null;
-    weekList.push({week:w,actualWeek:aw,isCurrentYear:isCur,hardSkip,softSkip,skipKind,
+    const limitedWk=isLimitedWeek(isCur?SY:NY,aw);
+    weekList.push({week:w,actualWeek:aw,isCurrentYear:isCur,hardSkip,softSkip,skipKind,limitedWk,
       inDE1:isWeekInX(de1,w,isCur,aw),inDE2:isWeekInX(de2,w,isCur,aw),inOP1,inOP2});
   }
   /* ---- plan math (preserved formulas, engine letters = original) ---- */
@@ -2662,6 +2934,8 @@ function compute(){
   let breaksCount=breakWeekNums.length;
   if(breakWeekNums.includes(26)&&breakWeekNums.includes(27))breaksCount--;                             // current-year winter pair
   if(breakWeekNums.includes(totalCurrent+26)&&breakWeekNums.includes(totalCurrent+27))breaksCount--;   // next-year winter pair
+  if(summerWeeks(SY).every(w=>breakWeekNums.includes(w)))breaksCount-=2;                                // current-year summer trio
+  if(summerWeeks(NY).every(w=>breakWeekNums.includes(totalCurrent+w)))breaksCount-=2;                   // next-year summer trio
   return {valid:true,totalCredits,C,W,avg,deSub,opSub,riskKey,riskCls,bufferKey,
     weekList,plans,baseDistribution,uniqueSkips,opSkipWeeks,
     de1,de2,op1,op2,allDisabled,startWeek,endWeek,
@@ -2674,7 +2948,36 @@ function compute(){
 /* =====================================================================
    SCREEN ROUTER + WIZARD NAV
    ===================================================================== */
+function setAdult(v){ S.adult=v; updateModeScreen(); }
+function updateModeScreen(){
+  const a=S?S.adult:null;
+  const mt=document.getElementById("modeTitle"), key=(a===null)?"before_start":"mode_title";
+  mt.setAttribute("data-i18n",key); mt.textContent=t(key);
+  document.getElementById("ageGate").style.display=(a===null)?"block":"none";
+  document.getElementById("ageSummary").textContent=(a===null)?"":t(a?"age_sum_yes":"age_sum_no");
+  document.getElementById("modeCards").style.display=(a===null)?"none":"block";
+  document.getElementById("modeHiset").style.display=(a===true)?"":"none";
+}
+function leaveHiset(){
+  if(!S.hiset)return;
+  S.hiset=false; S.credits=null; S.userToggled={}; S.customEnd=false; S.endWeek=46; S.crossYear=false;
+}
+function startHiset(){
+  if(S.adult!==true)return;
+  S.yearMode="current"; rebuildYearData();
+  S.hiset=true; S.credits=1;
+  S.deOn=false; S.opOn=false;
+  S.startWeek=defaultStartWeek();
+  S.crossYear=false; S.endWeek=SY.totalWeeks; S.customEnd=false;
+  S.userToggled={};
+  populateAllSelects();
+  showScreen("scr-wizard");
+  gotoStep(2);
+  syncWizardInputs();
+}
 function showScreen(id){
+  if(id==="scr-mode")updateModeScreen();
+  document.body.classList.toggle("hiset",!!(S&&S.hiset)&&id!=="scr-mode"&&id!=="scr-planner"&&id!=="scr-lock");
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   curScreen=id;
@@ -2690,6 +2993,8 @@ function goHome(){
   showScreen("scr-mode");
 }
 function startWizard(){
+  leaveHiset();
+  S.planContinues=false;
   showScreen("scr-wizard");
   gotoStep(1);
   syncWizardInputs();
@@ -2703,7 +3008,7 @@ function gotoStep(n){
     d.classList.toggle("done",dn<n); d.classList.toggle("cur",dn===n);
   });
   document.getElementById("nextBtn").style.display=n===5?"none":"block";
-  document.getElementById("nextBtn").textContent=(n===4)?t("see_plan"):t("next");
+  document.getElementById("nextBtn").textContent=(n===4||(S.hiset&&n===3))?t("see_plan"):t("next");
   if(n===2)renderTimelineUI();
   if(n===3)renderBreaks();
   if(n===4){renderExtras("de");renderExtras("op");}
@@ -2711,8 +3016,11 @@ function gotoStep(n){
   updateNextState(); updatePaceChip();
   window.scrollTo({top:0});
 }
-function wizNext(){ if(curStep<5)gotoStep(curStep+1); }
-function wizBack(){ if(curStep>1)gotoStep(curStep-1); else showScreen("scr-mode"); }
+function wizNext(){ if(curStep<5)gotoStep((S.hiset&&curStep===3)?5:curStep+1); }
+function wizBack(){
+  if(S.hiset){ if(curStep===5)gotoStep(3); else if(curStep===3)gotoStep(2); else showScreen("scr-mode"); return; }
+  if(curStep>1)gotoStep(curStep-1); else showScreen("scr-mode");
+}
 function updateNextState(){
   const b=document.getElementById("nextBtn");
   b.disabled=(curStep===1&&!(S.credits>0));
@@ -2750,8 +3058,29 @@ function showAdmin(){
   const ft=document.getElementById("facTagLine");
   if(ft)ft.innerHTML='🏷️ Students who enter this code are recorded as: <b>'+(panelTag||"untagged")+'</b>';
   updateAdmin();
+  renderBookingStatus();
   if(adminInt)clearInterval(adminInt);
   adminInt=setInterval(updateAdmin,1000);
+}
+function renderBookingStatus(){
+  const el=document.getElementById("bookingStatus"); if(!el)return;
+  const edit=cleanBookingUrl(LINKS_SHEET_EDIT_URL), eb=document.getElementById("linksEditBtn");
+  if(eb){ if(edit){eb.href=edit;eb.style.display="";} else eb.style.display="none"; }
+  const list=linkButtons();
+  const when=ts=>ts?new Date(ts).toLocaleString(LANG==="es"?"es-ES":"en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"";
+  let status;
+  if(sheetStatus.state==="off")status='No buttons sheet is connected yet. Paste the sheet’s “Publish to web” link into LINKS_SHEET_URL near the top of the file.';
+  else if(sheetStatus.state==="ok")status='✅ Buttons sheet loaded '+when(sheetStatus.at)+'. Changes to the sheet show the next time the tool is opened, or when you tap Refresh.';
+  else status='⚠️ Couldn’t reach the buttons sheet just now'+(sheetStatus.at?' — showing the copy saved '+when(sheetStatus.at)+'.':' and there is no saved copy on this device, so no sheet buttons are showing.')
+    +' Check the internet connection and that the sheet is still published to the web.';
+  el.innerHTML=status+(list.length
+    ?'<div style="margin-top:8px;">Students see these buttons, in this order:</div>'
+     +'<div style="margin-top:6px;display:flex;flex-direction:column;gap:6px;">'
+     +list.map(b=>'<div style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:7px 10px;">'
+       +'<b>'+escHtml(b.name||t("book_btn"))+'</b>'+(b.nameEs?' <span style="color:var(--muted);">· '+escHtml(b.nameEs)+'</span>':'')
+       +'<br><a href="'+escHtml(b.url)+'" target="_blank" rel="noopener noreferrer" style="color:var(--accent);word-break:break-all;">'+escHtml(b.url)+'</a>'
+       +'<br><span style="color:var(--muted);">'+(b.src==="file"?'Written in the file':'From the buttons sheet')+'</span></div>').join("")+'</div>'
+    :'<div style="margin-top:8px;">Students don’t see any link buttons right now.</div>');
 }
 function hideAdmin(){
   document.getElementById("adminPanel").style.display="none";
@@ -2765,6 +3094,7 @@ function updateAdmin(){
 }
 function adminEnterApp(){ nextUnlockIsStaff=true; sessionTag=panelTag; hideAdmin(); unlock(); }
 function unlock(){
+  loadSheetButtons();   /* pick up button changes for each new student */
   unlocked=true;
   lockExpired=false;
   clearLockSnapshot();
@@ -2818,7 +3148,7 @@ async function lockNow(){
         snap.sumUrl=URL.createObjectURL(pdf.output("blob"));
         snap.sumName=summaryPdfName();
       }catch(e){}
-      if(typeof TR!=="undefined"&&TR){
+      if(typeof TR!=="undefined"&&TR&&!trBlocked()){
         try{
           const pdf2=await buildPlanPdfDoc();
           snap.planUrl=URL.createObjectURL(pdf2.output("blob"));
@@ -2879,6 +3209,7 @@ function setLang(l){ LANG=l; applyI18n(); rerenderDynamic(); }
 function toggleLang(){ setLang(LANG==="es"?"en":"es"); }
 function rerenderDynamic(){
   populateAllSelects();
+  if(curScreen==="scr-mode")updateModeScreen();
   if(curScreen==="scr-wizard"){
     if(curStep===2)renderTimelineUI();
     if(curStep===3)renderBreaks();
@@ -2922,13 +3253,18 @@ function renderTimelineUI(){
     +"<a style='color:var(--accent);font-weight:700;font-size:.82rem;cursor:pointer;flex-shrink:0;' onclick='toggleStartChange()'>"+t("change")+"</a></span>";
   document.getElementById("startWeekSel").value=String(S.startWeek);
   /* finish chips */
-  const chips=[
+  document.querySelector("#wstep2 h2").textContent=t(S.hiset?"hs_s2_title":"s2_title");
+  document.querySelector('#wstep2 [data-i18n="s2_finish_label"]').textContent=t(S.hiset?"hs_finish_label":"s2_finish_label");
+  const chips=S.hiset?[
+    {w:SY.totalWeeks,label:t("year_end")},
+    {w:"custom",label:t("custom")}
+  ]:[
     {w:46,label:t("grad_deadline")},
     {w:44,label:t("week_before_grad"),sub:t("week_before_why")},
     {w:SY.totalWeeks,label:t("year_end")},
     {w:"custom",label:t("custom")}
   ];
-  const isPreset=[46,44,SY.totalWeeks].includes(S.endWeek);
+  const isPreset=(S.hiset?[SY.totalWeeks]:[46,44,SY.totalWeeks]).includes(S.endWeek);
   const row=document.getElementById("finishChips");
   row.innerHTML="";
   chips.forEach(c=>{
@@ -2954,7 +3290,7 @@ function renderTimelineUI(){
   const hint=document.getElementById("bufferHint");
   hint.className="subnote";
   hint.style.display="block";
-  hint.textContent=t("good_to_know");
+  hint.textContent=t(S.hiset?"hs_note":"good_to_know");
   /* cross year */
   document.getElementById("crossYearChk").checked=S.crossYear;
   document.getElementById("crossYearCard").classList.toggle("open",S.crossYear);
@@ -3008,6 +3344,7 @@ function renderBreaks(){
   if(inR(22,false))html+=breakRow("🦃",t("brk_tg").replace("🦃 ",""),S.skipTG,S.skipTG&&!S.userToggled.tg,"tgTG",t("limited_sub"));
   if(inR(26,false)&&inR(27,false))html+=breakRow("❄️",t("brk_winter").replace("❄️ ",""),S.skipWinter,S.skipWinter&&!S.userToggled.winter,"tgWinter");
   if(inR(41,false))html+=breakRow("🌸",t("brk_spring").replace("🌸 ",""),S.skipSpring,S.skipSpring&&!S.userToggled.spring,"tgSpring",t("limited_sub"));
+  { const sw=summerWeeks(SY); if(sw.every(w=>inR(w,false)))html+=breakRow("☀️",tf("brk_summer",{a:sw[0],b:sw[2]}),S.skipSummer,S.skipSummer&&!S.userToggled.summer,"tgSummer",t("limited_sub")); }
   document.getElementById("breaksList").innerHTML=html||'<p class="note">'+(LANG==="es"?"No hay descansos estándar dentro de tu rango.":"No standard breaks fall inside your plan range.")+'</p>';
   renderCustomSkips(false);
   /* next year */
@@ -3020,6 +3357,7 @@ function renderBreaks(){
     if(inR(22,true))nh+=breakRow("🦃",t("brk_tg").replace("🦃 ",""),S.nySkipTG,S.nySkipTG&&!S.userToggled.nyTg,"tgNyTG",t("limited_sub"));
     if(inR(26,true)&&inR(27,true))nh+=breakRow("❄️",t("brk_winter").replace("❄️ ",""),S.nySkipWinter,S.nySkipWinter&&!S.userToggled.nyWinter,"tgNyWinter");
     if(inR(41,true))nh+=breakRow("🌸",t("brk_spring").replace("🌸 ",""),S.nySkipSpring,S.nySkipSpring&&!S.userToggled.nySpring,"tgNySpring",t("limited_sub"));
+    { const sw=summerWeeks(NY); if(sw.every(w=>inR(w,true)))nh+=breakRow("☀️",tf("brk_summer",{a:sw[0],b:sw[2]}),S.nySkipSummer,S.nySkipSummer&&!S.userToggled.nySummer,"tgNySummer",t("limited_sub")); }
     document.getElementById("nyBreaksList").innerHTML=nh;
     renderCustomSkips(true);
   } else wrap.style.display="none";
@@ -3037,6 +3375,7 @@ function renderBreakImpact(){
   if(S.skipTG||(S.crossYear&&S.nySkipTG))names.push(t("tg_lc"));
   if(S.skipWinter||(S.crossYear&&S.nySkipWinter))names.push(t("winter_lc"));
   if(S.skipSpring||(S.crossYear&&S.nySkipSpring))names.push(t("spring_lc"));
+  if(S.skipSummer||(S.crossYear&&S.nySkipSummer))names.push(t("summer_lc"));
   if(!names.length)return;
   const r=compute();
   if(!r||!r.valid)return;
@@ -3044,9 +3383,10 @@ function renderBreakImpact(){
   if(deficit<=0)return;
   const endWeek=effectiveEndWeek();
   let suffix;
-  if(S.crossYear)suffix=t("bi_generic");
-  else if(S.endWeek===46)suffix=t("bi_past46");
-  else if(S.endWeek===44||S.endWeek===45)suffix=(S.endWeek+deficit<=46)?t("bi_cushion_ok"):t("bi_past46");
+  const finW=S.crossYear?S.endWeekNext:S.endWeek;
+  if(finW===46)suffix=t("bi_past46");
+  else if(finW===44||finW===45)suffix=(finW+deficit<=46)?t("bi_cushion_ok"):t("bi_past46");
+  else if(S.crossYear)suffix=t("bi_generic");
   else if(S.endWeek===SY.totalWeeks)suffix=t("bi_year_end");
   else suffix=t("bi_generic");
   const nameStr=names.length===1?names[0]
@@ -3068,6 +3408,8 @@ function tgNyW1(e){e.stopPropagation();flipBreak("nySkipW1",null);}
 function tgNyTG(e){e.stopPropagation();flipBreak("nySkipTG","nyTg");}
 function tgNyWinter(e){e.stopPropagation();flipBreak("nySkipWinter","nyWinter");}
 function tgNySpring(e){e.stopPropagation();flipBreak("nySkipSpring","nySpring");}
+function tgSummer(e){e.stopPropagation();flipBreak("skipSummer","summer");}
+function tgNySummer(e){e.stopPropagation();flipBreak("nySkipSummer","nySummer");}
 function addCustomSkip(isNext){
   const arr=isNext?S.nyCustomSkips:S.customSkips;
   if(arr.length>=10)return;
@@ -3102,7 +3444,7 @@ function renderCustomSkips(isNext){
   arr.forEach(c=>{
     let opts="";
     for(let w=1;w<=sy.totalWeeks;w++)
-      opts+='<option value="'+w+'"'+(w===c.week?" selected":"")+'>'+t("week")+" "+w+": "+weekLabel(sy,w)+"</option>";
+      opts+='<option value="'+w+'"'+(w===c.week?" selected":"")+'>'+weekOptLabel(sy,w)+"</option>";
     html+='<div class="togrow"><span class="tg-emoji">🗓️</span>'
       +'<select class="wsel" style="flex:1;margin:0;" onchange="customSkipChanged('+isNext+','+c.id+',this)">'+opts+'</select>'
       +'<label class="switch"><input type="checkbox" '+(c.on?"checked":"")+' onchange="customSkipToggled('+isNext+','+c.id+',this)"><span class="slider"></span></label>'
@@ -3126,7 +3468,7 @@ function toggleExtra(kind,fromChk){
 function weekOptions(sy,selVal){
   let o="";
   for(let w=1;w<=sy.totalWeeks;w++)
-    o+='<option value="'+w+'"'+(w===selVal?" selected":"")+'>'+t("week")+" "+w+": "+weekLabel(sy,w)+"</option>";
+    o+='<option value="'+w+'"'+(w===selVal?" selected":"")+'>'+weekOptLabel(sy,w)+"</option>";
   return o;
 }
 function renderExtras(kind){
@@ -3165,6 +3507,12 @@ function renderExtras(kind){
     }
     html+='<label class="flabel">'+t("hs_credits_q")+'</label>'
       +'<input class="finput" type="number" min="0" max="230" inputmode="numeric" value="'+(e.credits||"")+'" oninput="xSet(\''+kind+'\','+i+',\'credits\',+this.value||0)">'
+      +(kind==="de"
+        ?'<label class="flabel">'+t("de_need_q")+'</label><div class="radiorow" style="flex-direction:column;align-items:flex-start;gap:6px;">'
+          +'<label><input type="radio" name="de'+i+'need" '+(e.counts?"checked":"")+' onchange="xSet(\'de\','+i+',\'counts\',true)"> '+t("de_need_yes")+'</label>'
+          +'<label><input type="radio" name="de'+i+'need" '+(!e.counts?"checked":"")+' onchange="xSet(\'de\','+i+',\'counts\',false)"> '+t("de_need_no")+'</label>'
+          +'</div><p class="note" style="margin:8px 0 0;">'+t("de_need_note")+'</p>'
+        :'')
       +'</div>';
   });
   if(!arr[1])html+='<button class="addbtn" onclick="addEntry(\''+kind+'\')">'+t(kind==="de"?"add_second_de":"add_second_op")+'</button>';
@@ -3228,6 +3576,19 @@ function renderResults(){
     area.innerHTML='<div class="card">'+msg+'</div>';
     return;
   }
+  if(S.hiset){
+    area.innerHTML='<div class="card center">'
+      +'<h2>'+t("hs_results_title")+'</h2>'
+      +'<div style="font-size:1.7rem;font-weight:800;color:var(--good);margin:10px 0 6px;">'+t("hs_pace_big")+'</div>'
+      +'<p class="sub" style="line-height:1.6;">'+tf("hs_results_sub",{w:r.W,a:weekDatesLabel(r.startWeek),b:weekDatesLabel(r.endWeek)})+'</p>'
+      +'<div class="subnote">'+t("hs_results_note")+'</div>'
+      +'<button class="bigbtn" style="margin-top:14px;" onclick="openTracker(\'A\')">'+t("hs_see_plan")+'</button>'
+      +'<div class="helperrow no-print" style="margin-top:10px;">'
+      +'<button onclick="gotoStep(2)">'+t("adj_finish")+'</button>'
+      +'<button onclick="gotoStep(3)">'+t("adj_breaks")+'</button>'
+      +'</div></div>';
+    return;
+  }
   const pct=Math.min(r.avg/3,1);
   const circ=2*Math.PI*80;
   const col=r.avg<=2?"var(--good)":r.avg<3?"var(--warn)":"var(--bad)";
@@ -3235,13 +3596,13 @@ function renderResults(){
   [[r.de1,1,"de"],[r.de2,2,"de"],[r.op1,1,"op"],[r.op2,2,"op"]].forEach(([x,n,k])=>{
     if(!x.active)return;
     const range=x.nextYearOnly
-      ?(LANG==="es"?"próximo año, semanas ":"next year, weeks ")+x.startWeekNext+"–"+x.endWeekNext
-      :x.crossYear?(t("wk")+" "+x.startWeek+"–"+x.endWeek+" → "+(LANG==="es"?"próx. año sem. ":"next yr wk ")+x.endWeekNext)
+      ?(LANG==="es"?"próximo año escolar, semanas ":"next school year, weeks ")+x.startWeekNext+"–"+x.endWeekNext
+      :x.crossYear?(t("wk")+" "+x.startWeek+"–"+x.endWeek+" → "+(LANG==="es"?"próx. año escolar sem. ":"next school yr wk ")+x.endWeekNext)
       :(t("wk")+" "+x.startWeek+"–"+x.endWeek);
     const nm=(esc(x.name)||(k==="de"?(LANG==="es"?"Clase de colegio ":"College class ")+n:(LANG==="es"?"Programa externo ":"Outside program ")+n));
     const hlCls=k==="de"?(n===1?"hl-de1":"hl-de2"):"hl-op";
     extras+='<div class="subnote '+hlCls+'">'+(k==="de"?"🏫 ":"🏕️ ")+"<b>"+nm+":</b> "
-      +tf(k==="de"?"de_subtract":"op_subtract",{n:x.credits,r:range})+'</div>';
+      +tf(k==="de"?((S.de[n-1]&&S.de[n-1].counts)?"de_subtract":"de_extra"):"op_subtract",{n:x.credits,r:range})+'</div>';
   });
   let html='<div class="card center">'
     +'<h2>'+t("results_title")+'</h2>'
@@ -3264,6 +3625,13 @@ function renderResults(){
     +(r.allDisabled&&(r.de1.active||r.de2.active)?'<div class="errbox">'+t("de_conflict_all")+'</div>':"")
     +(!r.plans.C.available&&!r.plans.A.available&&!(r.de1.active||r.de2.active)?'<div class="errbox">'+t("no_plans_fit")+'</div>':"")
     +'</div>';
+  html+='<div class="card no-print" style="padding:14px 18px;"><b style="font-size:.95rem;">'+t("adj_title")+'</b>'
+    +'<div class="helperrow">'
+    +'<button onclick="gotoStep(4)" style="flex-basis:100%;border-color:var(--accent);color:var(--accent-dark);">'+t("adj_extras")+'</button>'
+    +'<button onclick="gotoStep(1)">'+t("adj_credits")+'</button>'
+    +'<button onclick="gotoStep(2)">'+t("adj_finish")+'</button>'
+    +'<button onclick="gotoStep(3)">'+t("adj_breaks")+'</button>'
+    +'</div></div>';
   html+='<div class="card"><h2>'+t("pick_plan")+'</h2><p class="sub">'+t("pick_plan_sub")+'</p>';
   ["A","B"].forEach(dp=>{
     const e=PLAN_MAP[dp],p=r.plans[e],m=PLAN_META[dp];
@@ -3335,11 +3703,11 @@ function cushionWeeks(r){
   /* if the plan ends 1–2 weeks before Week 46 (graduation ceremony credit
      deadline), still show those weeks as zero-credit cushion rows so the
      student can see the deadline itself */
-  if(S.crossYear)return[];
-  const e=r.endWeek;
+  const base=S.crossYear?SY.totalWeeks:0;
+  const e=S.crossYear?S.endWeekNext:r.endWeek;
   if(e>=46||46-e>2)return[];
   const out=[];
-  for(let w=e+1;w<=46;w++)out.push(w);
+  for(let w=e+1;w<=46;w++)out.push(base+w);
   return out;
 }
 function mixText(){
@@ -3354,12 +3722,15 @@ function renderTracker(dp,keepVals){
   const r=TR.r,m=PLAN_META[dp];
   const planned=TR.vals.reduce((s,v)=>s+v,0);
   const left=r.C-planned;
+  const hs=!!S.hiset;
+  const blocked=!hs&&left>0;   /* every credit must be placed before the plan can be exported */
   let rows=""; let dividerDone=false;
   r.weekList.forEach((w,i)=>{
     if(S.crossYear&&!w.isCurrentYear&&!dividerDone){
       rows+='<div class="yeardivider">'+NY.yearLabel+'</div>'; dividerDone=true;
     }
-    const[core,note]=splitLabel(extWeekLabel(w.week));
+    let[core,note]=splitLabel(extWeekLabel(w.week));
+    note=withSummer(note,w.isCurrentYear?SY:NY,w.actualWeek);
     let tags="";
     if(w.inDE1)tags+='<span class="wktag wt-de1">🏫 '+(esc(r.de1.name)||"DE 1")+'</span>';
     if(w.inDE2)tags+='<span class="wktag wt-de2">🏫 '+(esc(r.de2.name)||"DE 2")+'</span>';
@@ -3370,6 +3741,7 @@ function renderTracker(dp,keepVals){
       else if(w.skipKind==="custom")tags+='<span class="wktag wt-skip">🙋 '+t("week_off")+'</span>';
       else tags+='<span class="wktag wt-skip">❄️ '+t("closed_short")+'</span>';
     }
+    if(w.limitedWk&&!w.hardSkip)tags+='<span class="wktag wt-lim">⏳ '+t("limited_heads")+'</span>';
     if(w.softSkip)tags+='<span class="wktag wt-skip">'+(LANG==="es"?"semana corta":"short week")+'</span>';
     const v=TR.vals[i];
     const isOpWk=w.inOP1||w.inOP2;
@@ -3381,44 +3753,47 @@ function renderTracker(dp,keepVals){
       +(w.hardSkip?(isOpWk
           ?'<em style="font-size:.8rem;color:#b91c1c;font-weight:700;font-style:normal;">🏕️</em>'
           :'<em style="font-size:.72rem;color:#059669;font-weight:700;font-style:normal;max-width:92px;text-align:right;line-height:1.25;display:inline-block;">'+t("credits_opt")+'</em>')
-        :'<button class="mini" onclick="trAdj('+i+',-1)"'+(v<=0?" disabled":"")+'>−</button>'
+        :'<button class="mini" onclick="trAdj('+i+',-1)"'+(v<=(hs?1:0)?" disabled":"")+'>−</button>'
         +'<span class="wk-val'+(v===0?" zero":"")+'">'+v+'</span>'
-        +'<button class="mini" onclick="trAdj('+i+',1)"'+(v>=TR.maxPerWeek||left<=0?" disabled":"")+'>+</button>')
+        +'<button class="mini" onclick="trAdj('+i+',1)"'+(v>=TR.maxPerWeek||(!hs&&left<=0)?" disabled":"")+'>+</button>')
       +'</div></div>';
   });
   cushionWeeks(r).forEach(cw=>{
     const[core,note]=splitLabel(extWeekLabel(cw));
     rows+='<div class="wkrow bufrow">'
-      +'<div class="wk-num">'+cw+'</div>'
+      +'<div class="wk-num">'+extWeekNum(cw)+'</div>'
       +'<div class="wk-date">'+core+(note?'<span class="d-note">'+note+'</span>':"")
       +'<div class="wk-tags"><span class="wktag wt-buf">'+t("buffer_week")+'</span></div></div>'
       +'<div class="wk-ctrl"><span class="wk-val zero">0</span></div>'
       +'</div>';
   });
-  const doneCls=left===0?"ok":(left<0?"no":"");
+  const doneCls=left===0?"ok":(left>0?"todo":"no");
   document.getElementById("trackerArea").innerHTML=
-    '<div class="card no-print" style="padding:12px 16px;"><button class="hbtn" onclick="showScreen(\'scr-wizard\');gotoStep(5)">'+t("tracker_back")+'</button></div>'
+    '<div class="card no-print" style="padding:12px 16px;"><button class="hbtn" onclick="showScreen(\'scr-wizard\');gotoStep(5)">'+t(hs?"hs_back":"tracker_back")+'</button></div>'
     +'<div class="card">'
-    +'<h2>'+m.emoji+" Plan "+dp+" · "+t(m.nameKey)+'</h2>'
-    +'<div class="badgerow">'
-    +'<span class="tbadge">'+t("target")+': <b>'+r.C+'</b></span>'
-    +'<span class="tbadge">'+t("planned")+': <b id="trPlanned">'+planned+'</b></span>'
-    +'<span class="tbadge '+doneCls+'">'+t("left")+': <b id="trLeft">'+left+'</b></span>'
+    +'<h2>'+(hs?"📘 "+t("hs_plan_name"):m.emoji+" Plan "+dp+" · "+t(m.nameKey))+'</h2>'
+    +'<div class="badgerow trk-sticky">'
+    +'<span class="tbadge">'+t(hs?"hs_minimum":"target")+': <b>'+r.C+'</b></span>'
+    +'<span class="tbadge'+(hs?" ok":"")+'">'+t("planned")+': <b id="trPlanned">'+planned+'</b></span>'
+    +(hs?'':'<span class="tbadge '+doneCls+'">'+t("left")+': <b id="trLeft">'+left+'</b></span>')
     +'</div>'
     +'<div class="subnote">📊 <b>'+t("pp_mix")+'</b> '+(mixText()||"—")+(r.breaksCount>0?' · '+r.breaksCount+' '+t("breaks_stat"):"")+(r.opWeeksCount>0?' · '+r.opWeeksCount+' '+t("op_weeks_stat"):"")+'</div>'
-    +'<p class="note no-print">'+t("tracker_tip")+'</p>'
+    +'<p class="note no-print">'+t(hs?"hs_tracker_tip":"tracker_tip")+'</p>'
     +'<div class="helperrow no-print">'
     +'<button onclick="trReset()">'+t("reset_plan")+'</button>'
-    +'<button onclick="trClear()">'+t("clear_all")+'</button>'
+    +(hs?'':'<button onclick="trClear()">'+t("clear_all")+'</button>')
     +'</div>'
     +'<div style="margin-top:8px;">'+rows+'</div>'
     +'</div>'
     +'<div class="card no-print">'
-    +(canSharePdf()?'<button class="bigbtn" id="sharePdfBtn" onclick="sharePlanPdf()">'+t("share_pdf")+'</button>':'')
-    +'<button class="'+(canSharePdf()?'ghostbtn':'bigbtn')+'" id="dlPdfBtn" onclick="downloadPlanPdf()">'+t("dl_pdf")+'</button>'
-    +'<button class="ghostbtn" onclick="doPrint()">'+t("print_plan")+'</button>'
+    +(blocked?'<div class="subnote" style="margin:0 0 12px;line-height:1.5;">'+tf("tr_blocked",{n:left})+'</div>':'')
+    +'<button class="bigbtn" id="dlPdfBtn" onclick="downloadPlanPdf()"'+(blocked?" disabled":"")+'>'+t("dl_pdf")+'</button>'
+    +'<button class="ghostbtn" onclick="doPrint()"'+(blocked?" disabled":"")+'>'+t("print_plan")+'</button>'
+    +bookingBtnHtml()+''
     +'<p class="note center" style="margin-top:12px;">'+t("disclaimer")+'</p>'
     +'</div>';
+  { const hd=document.getElementById("appHeader");
+    document.documentElement.style.setProperty("--hdrH",((hd&&hd.offsetHeight)||0)+"px"); }
   buildPrintPlanner();
 }
 function buildPrintPlanner(){
@@ -3431,13 +3806,15 @@ function buildPrintPlanner(){
   const push=(html,cost)=>rows.push({html:html,cost:cost});
   r.weekList.forEach((w,i)=>{
     if(S.crossYear&&!w.isCurrentYear&&!divDone){push('<tr class="pp-year"><td colspan="4">'+NY.yearLabel+'</td></tr>',0.6);divDone=true;}
-    const[core,note]=splitLabel(extWeekLabel(w.week));
+    let[core,note]=splitLabel(extWeekLabel(w.week));
+    note=withSummer(note,w.isCurrentYear?SY:NY,w.actualWeek);
     let tags="";
     if(w.inDE1)tags+=' <span class="pp-tag de1">🏫 '+(esc(r.de1.name)||"DE 1")+'</span>';
     if(w.inDE2)tags+=' <span class="pp-tag de2">🏫 '+(esc(r.de2.name)||"DE 2")+'</span>';
     if(w.inOP1)tags+=' <span class="pp-tag op">🏕️ '+(esc(r.op1.name)||"OP 1")+'</span>';
     if(w.inOP2)tags+=' <span class="pp-tag op">🏕️ '+(esc(r.op2.name)||"OP 2")+'</span>';
-    const dateCell='<td class="pp-datecell">'+core+tags+(note?'<em>'+note+'</em>':"")+'</td>';
+    const limNote=(w.limitedWk&&!w.hardSkip)?'<em>⏳ '+t("limited_heads")+'</em>':"";
+    const dateCell='<td class="pp-datecell">'+core+tags+(note?'<em>'+note+'</em>':"")+limNote+'</td>';
     if(w.hardSkip){
       const isOpWk=w.inOP1||w.inOP2;
       if(isOpWk){
@@ -3464,23 +3841,23 @@ function buildPrintPlanner(){
       slots+='<span class="pslot'+(k>=v?" bonus":"")+'"><span class="pbox">'+(k<v?(k+1):"")+'</span><span class="pline"></span></span>';
     }
     push('<tr><td class="pp-wk">'+extWeekNum(w.week)+'</td>'+dateCell
-      +'<td class="pp-credits">'+v+'</td><td class="pp-slots">'+slots+'</td></tr>',(tags||note)?1.25:1);
+      +'<td class="pp-credits">'+v+'</td><td class="pp-slots">'+slots+'</td></tr>',(tags||note||limNote)?1.25:1);
   });
   cushionWeeks(r).forEach(cw=>{
     const[core,note]=splitLabel(extWeekLabel(cw));
     let slots="";
     for(let k=0;k<4;k++)slots+='<span class="pslot bonus"><span class="pbox"></span><span class="pline"></span></span>';
-    push('<tr class="pp-buffer"><td class="pp-wk">'+cw+'</td>'
+    push('<tr class="pp-buffer"><td class="pp-wk">'+extWeekNum(cw)+'</td>'
       +'<td class="pp-datecell">'+core+(note?'<em>'+note+'</em>':"")+'<em>'+t("pp_buffer_row")+'</em></td>'
       +'<td class="pp-credits">0</td><td class="pp-slots">'+slots+'</td></tr>',1.4);
   });
-  push('<tr class="pp-total"><td colspan="2">'+t("pp_total")+'</td><td class="pp-credits">'+total+'</td><td>/ '+r.C+' '+t("credits")+'</td></tr>',0.6);
+  push('<tr class="pp-total"><td colspan="2">'+t("pp_total")+'</td><td class="pp-credits">'+total+'</td><td>'+(S.hiset?t("credits"):'/ '+r.C+' '+t("credits"))+'</td></tr>',0.6);
   /* header block (page 1 only) */
   const headerBlock=
-    '<div class="pp-title">'+t("pp_title")+' — Plan '+dp+' · '+t(m.nameKey)+' '+m.emoji+'</div>'
+    '<div class="pp-title">'+t("pp_title")+' — '+(S.hiset?t("hs_plan_name")+' 📘':'Plan '+dp+' · '+t(m.nameKey)+' '+m.emoji)+'</div>'
     +'<div class="pp-meta">'
     +'<span><b>'+t("pp_created")+'</b> '+todayStr()+'</span>'
-    +'<span><b>'+t("target")+':</b> '+r.C+' '+t("credits")+'</span>'
+    +'<span><b>'+t(S.hiset?"hs_minimum":"target")+':</b> '+r.C+' '+t("credits")+'</span>'
     +'<span><b>'+t("eb_avg")+':</b> '+fmtAvg(r.avg)+' '+t("credits_wk")+'</span>'
     +'<span><b>'+t("pp_finishby")+'</b> '+weekDatesLabel(r.endWeek)+'</span>'
     +'</div>'
@@ -3516,11 +3893,10 @@ function buildPrintPlanner(){
    page-by-page with html2canvas and assembled into a letter-size PDF with
    jsPDF — entirely in the browser, no server and no printer needed.
    ===================================================================== */
-function canSharePdf(){
-  try{
-    if(!navigator.canShare||!window.File)return false;
-    return navigator.canShare({files:[new File(["x"],"x.pdf",{type:"application/pdf"})]});
-  }catch(e){return false;}
+/* true while the regular planner still has unplaced credits */
+function trBlocked(){
+  if(typeof TR==="undefined"||!TR||S.hiset)return false;
+  return TR.r.C-TR.vals.reduce((s,v)=>s+v,0)>0;
 }
 function planPdfName(){
   const dp=TR?TR.dp:"";
@@ -3553,6 +3929,7 @@ async function buildPlanPdfDoc(){
 }
 let pdfBusy=false;
 async function downloadPlanPdf(){
+  if(trBlocked()){toast(t("tr_blocked_toast"));return;}
   if(requirePost(downloadPlanPdf))return;
   if(pdfBusy||!TR)return;
   pdfBusy=true; toast(t("pdf_working"));
@@ -3562,32 +3939,6 @@ async function downloadPlanPdf(){
     toast(t("pdf_done"));
   }catch(e){ toast(t("pdf_fail")); }
   finally{ pdfBusy=false; }
-}
-async function sharePlanPdf(){
-  if(requirePost(sharePlanPdf))return;
-  if(pdfBusy||!TR)return;
-  pdfBusy=true; toast(t("pdf_working"));
-  try{
-    const pdf=await buildPlanPdfDoc();
-    const file=new File([pdf.output("blob")],planPdfName(),{type:"application/pdf"});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      try{
-        await navigator.share({files:[file],title:t("app_title")});
-        toast(t("pdf_share_done"));
-      }catch(err){
-        if(err&&err.name==="AbortError"){ hideToastNow(); }   // student closed the share sheet — not an error
-        else { pdf.save(planPdfName()); toast(t("pdf_done")); } // share failed → quietly fall back to download
-      }
-    } else {
-      pdf.save(planPdfName()); toast(t("pdf_done"));
-    }
-  }catch(e){ toast(t("pdf_fail")); }
-  finally{ pdfBusy=false; }
-}
-function hideToastNow(){
-  const el=document.getElementById("toastEl");
-  if(el)el.style.opacity="0";
-  if(toastTimer){clearTimeout(toastTimer);toastTimer=null;}
 }
 
 /* =====================================================================
@@ -3661,40 +4012,19 @@ async function downloadSummaryPdf(){
   }catch(e){ toast(t("pdf_fail")); }
   finally{ pdfBusy=false; }
 }
-async function shareSummaryPdf(){
-  if(pdfBusy)return;
-  const r=compute();
-  if(!r.valid){toast(t("invalid"));return;}
-  pdfBusy=true; toast(t("pdf_working"));
-  try{
-    const pdf=await buildSummaryPdfDoc();
-    const file=new File([pdf.output("blob")],summaryPdfName(),{type:"application/pdf"});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      try{
-        await navigator.share({files:[file],title:t("app_title")});
-        toast(t("pdf_share_done"));
-      }catch(err){
-        if(err&&err.name==="AbortError"){ hideToastNow(); }
-        else { pdf.save(summaryPdfName()); toast(t("pdf_done")); }
-      }
-    } else {
-      pdf.save(summaryPdfName()); toast(t("pdf_done"));
-    }
-  }catch(e){ toast(t("pdf_fail")); }
-  finally{ pdfBusy=false; }
-}
 function trAdj(i,d){
   const r=TR.r;
   const planned=TR.vals.reduce((s,v)=>s+v,0);
   const left=r.C-planned;
+  const hs=!!S.hiset;
   let v=TR.vals[i]+d;
-  if(v<0)v=0;
+  if(v<(hs?1:0))v=hs?1:0;
   if(v>TR.maxPerWeek)v=TR.maxPerWeek;
-  if(d>0&&left<=0)return;
+  if(d>0&&left<=0&&!hs)return;
   TR.vals[i]=v;
   renderTracker(TR.dp,true);
   const newLeft=r.C-TR.vals.reduce((s,x)=>s+x,0);
-  if(newLeft===0)confetti(30);
+  if(newLeft===0&&!hs)confetti(30);
 }
 function trReset(){
   const r=TR.r,dist=trimmedDistribution(r,TR.engine);
@@ -3865,7 +4195,8 @@ function gpGetGyaCohorts(today,freshmanYear){
   }
   return cohorts.slice(0,4);
 }
-function gpRenderRows(periods,showUseBtn,combinedCredits,calcConfig){
+function gpRenderRows(periods,showUseBtn,combinedCredits,calcConfig,opts){
+  const rel=!!(opts&&opts.rel);
   const cfg=calcConfig||{}; const cfgSW=cfg.startWk||1,cfgEW=cfg.curEndWk||52,cfgNW=cfg.nextEndWk||46;
   let html=""; let combinedDone=false;
   const curP=periods.find(pp=>pp.isCur);
@@ -3883,7 +4214,7 @@ function gpRenderRows(periods,showUseBtn,combinedCredits,calcConfig){
     const paceIcon=p.pace<=2.0?"✅":p.pace<=3.0?"⚠️":"🚨";
     let rowCls="gp-row"; if(p.isCur)rowCls+=" cur"; if(p.isGrad)rowCls+=" grad";
     const bmMet=p.cumEnd>=p.bmTarget;
-    let yearName=t("gp_year")+" "+p.hsYr+" ";
+    let yearName=(rel&&p.hsYr===1?t("rt_curyear"):t("gp_year")+" "+p.hsYr)+" ";
     if(p.isCur)yearName+=t("gp_remainder");
     else if(p.isPostGya)yearName+=t("gp_postgya");
     else if(p.isGrad)yearName+=t("gp_gradyear");
@@ -3900,17 +4231,18 @@ function gpRenderRows(periods,showUseBtn,combinedCredits,calcConfig){
       +'<div class="gp-cred"><b>'+p.credits+' '+t("credits")+'</b>'
       +'<div class="gp-run">'+t("gp_running")+' '+p.cumEnd+' / 230</div></div></div>'
       +'<div class="gp-meta"><span class="'+paceCls+'">'+paceIcon+' '+p.pace.toFixed(1)+' '+t("cr_wk")+'</span>'
-      +'<span class="'+(bmMet?"p-green":"p-red")+'">'+(bmMet?"✅":"❌")+' '+t("gp_benchmark")+' '+p.bmTarget+'</span></div>';
+      +(rel?'':'<span class="'+(bmMet?"p-green":"p-red")+'">'+(bmMet?"✅":"❌")+' '+t("gp_benchmark")+' '+p.bmTarget+'</span>')+'</div>';
     if(p.isCur&&p.skippedWeek)html+='<div class="subnote" style="margin-top:7px;">'+t("gp_bonus")+'</div>';
+    if(p.isGrad)html+='<div class="subnote" style="margin-top:6px;color:#14532d;font-weight:700;">'+t("gp_in_time")+'</div>';
     if(showUseBtn&&p.isCur&&p.credits>0){
-      html+='<button class="gp-usebtn" onclick="useCreditsInCalculator('+p.credits+','+cfgSW+','+cfgEW+',false,0)">'
-        +tf("gp_use",{n:p.credits,y:p.hsYr})+'</button>';
+      html+='<button class="gp-usebtn" onclick="useCreditsInCalculator('+p.credits+','+cfgSW+','+cfgEW+',false,0,'+(!p.isGrad)+')">'
+        +(rel?tf("rt_use_cur",{n:p.credits}):tf("gp_use",{n:p.credits,y:p.hsYr}))+'</button>';
     }
     html+='</div>';
     if(!combinedDone&&!p.isCur&&!p.isGyaSlot&&combinedCredits>0&&curP){
       combinedDone=true;
       html+='<button class="gp-usebtn" style="margin-bottom:4px;" onclick="useCreditsInCalculator('+combinedCredits+','+cfgSW+','+cfgEW+',true,'+cfgNW+')">'
-        +tf("gp_use2",{n:combinedCredits,a:curP.hsYr,b:p.hsYr})+'</button>';
+        +(rel?tf("rt_use_two",{n:combinedCredits}):tf("gp_use2",{n:combinedCredits,a:curP.hsYr,b:p.hsYr}))+'</button>';
     }
   });
   return html;
@@ -3949,6 +4281,7 @@ function calcGradPlan(){
   if(hsYear<1||hsYear>8){el.innerHTML='<div class="card"><div class="errbox">'+t("gp_valid_year")+'</div></div>';return;}
   if(credRemaining<=0){el.innerHTML='<div class="card"><div class="riskband risk-good">'+t("gp_ready")+'</div></div>';confetti(80);return;}
   if(credRemaining>TOTAL){el.innerHTML='<div class="card"><div class="errbox">'+t("gp_valid_range")+'</div></div>';return;}
+  if(hsYear>=5){renderReturningPlan(el,credEarned,credRemaining);return;}
   const gradSY4=freshmanYear+3;
   const periods4=gpBuildPeriods(freshmanYear,gradSY4,currentSY,curWeek,syData,skippedWeek);
   const leftover4=gpFrontLoad(periods4,credEarned,credRemaining);
@@ -3968,6 +4301,7 @@ function calcGradPlan(){
   html+='<div class="gp-bar"><span><b>'+t("gp_classof")+'</b> '+classOf+'</span>'
     +'<span><b>'+t("gp_earned")+'</b> '+credEarned+' / '+TOTAL+'</span>'
     +'<span><b>'+t("gp_curyear")+'</b> '+t("gp_year")+' '+hsYear+'</span></div>';
+  html+='<div class="subnote" style="margin-top:10px;line-height:1.5;">'+t("gp_count_note")+'</div>';
   const _curP4=periods4.find(p=>p.isCur), _nxtP4=periods4.find(p=>!p.isCur&&!p.isGyaSlot);
   const combined4=(_curP4&&_nxtP4)?_curP4.credits+_nxtP4.credits:0;
   const _curP5=periods5.find(p=>p.isCur), _nxtP5=periods5.find(p=>!p.isCur&&!p.isGyaSlot);
@@ -3979,7 +4313,9 @@ function calcGradPlan(){
     curEndWk:_curP5?(_curP5.isGrad?46:syData.totalWeeks):syData.totalWeeks,
     nextEndWk:_nxtP5?(_nxtP5.isGrad?46:generateSchoolYear(_nxtP5.sy).totalWeeks):46};
   const opt1WontFit=leftover4>0;
-  html+='<div class="gp-section gp-sec-trad"><div class="gp-sec-title">'+tf("gp_opt1",{y:classOf})+'</div>';
+  let gpNextOpt=3, gpPathCount=0;   /* GYA keeps "Option 3" unless new options were listed before it */
+  html+='<!--gp-paths-->';
+  html+='<div class="gp-section gp-sec-trad"'+(opt1WontFit?' data-muted data-glance="'+tf("gp_wont_fit",{n:leftover4}).replace(/[()]/g,"")+'"':' data-glance="'+gpGlancePeriods(periods4)+'"')+'><div class="gp-sec-title">'+tf("gp_opt1",{y:classOf})+'</div>';
   if(opt1WontFit)html+='<p class="center" style="color:var(--bad);font-weight:800;margin:8px 0 2px;">'+tf("gp_wont_fit",{n:leftover4})+'</p>';
   else html+=gpRenderRows(periods4,true,combined4,calcConfig4);
   html+='</div>';
@@ -3987,7 +4323,7 @@ function calcGradPlan(){
     html+='<div class="gp-or">'+t("gp_or")+'</div>';
     const maxPace5=periods5.length?Math.max(...periods5.map(p=>p.pace)):0;
     const opt2NeedsCounselor=maxPace5>2.0;
-    html+='<div class="gp-section gp-sec-ext"><div class="gp-sec-title">'+tf("gp_opt2",{y:classOf+1})+'</div>';
+    html+='<div class="gp-section gp-sec-ext" data-glance="'+(opt2NeedsCounselor?t("gp_counselor_t"):gpGlancePeriods(periods5))+'"><div class="gp-sec-title">'+tf("gp_opt2",{y:classOf+1})+'</div>';
     if(opt2NeedsCounselor){
       html+='<div class="warnbox">🗓️ <b>'+t("gp_counselor_t")+'</b><br>'+t("gp_counselor")+'</div>';
     } else html+=gpRenderRows(periods5,true,combined5,calcConfig5);
@@ -3997,10 +4333,29 @@ function calcGradPlan(){
     if(opt1WontFit&&!opt2NeedsCounselor){
       html+='<div class="notice" style="margin-top:12px;line-height:1.5;">'+t("gp_longer_ok")+'</div>';
     }
+    if(opt1WontFit){
+      let optNum=3, extra="", count=opt2NeedsCounselor?0:1;
+      const cu=gpCatchUpPlan(credRemaining,currentSY,curWeek,syData);
+      if(cu&&(opt2NeedsCounselor||(cu[cu.length-1].sy<=gradSY5&&cu[0].credits>=(_curP5?_curP5.credits:0)+5))){
+        extra+='<div class="gp-or">'+t("gp_or")+'</div>'+gpRenderFast(cu,credEarned,hsYear,false,skippedWeek,"catch",optNum++,
+          (!opt2NeedsCounselor&&cu[cu.length-1].sy===gradSY5&&_curP5)?{o:t("gp_cmp_opt2"),d:cu[0].credits-_curP5.credits,b:_nxtP5?_nxtP5.pace:null}:null); count++;
+      }
+      const fast=gpFastPlan(credRemaining,currentSY,curWeek,syData);
+      if(opt2NeedsCounselor||gpFastIsSooner(fast,gradSY5,46)){
+        extra+='<div class="gp-or">'+t("gp_or")+'</div>'+gpRenderFast(fast,credEarned,hsYear,false,skippedWeek,"fast",optNum++); count++;
+      }
+      html+=extra;
+      gpNextOpt=optNum; gpPathCount=count;
+    }
     const gyaWorks=gyaEligible&&leftoverGya===0&&maxPaceGya<=2.0;
+    /* lead with choice, not with what doesn't fit */
+    if(opt1WontFit){
+      const total=gpPathCount+(gyaWorks?1:0);
+      if(total>=2)html=html.replace('<!--gp-paths-->','<div class="riskband risk-good" style="margin-top:12px;">'+tf("gp_paths",{n:total})+'</div>');
+    }
     if(gyaWorks){
       html+='<div class="gp-or">'+t("gp_or")+'</div>';
-      html+='<div class="gya-card"><div class="center"><b style="font-size:1.02rem;">'+t("gp_gya_t")+'</b></div>'
+      html+='<div class="gya-card" data-glance="'+t("gl_gya")+'"><div class="center"><b style="font-size:1.02rem;">'+t("gp_gya_t").replace("3",String(gpNextOpt))+'</b></div>'
         +'<p style="margin:6px 0 8px;">'+t("gp_gya_p")+'</p>';
       if(gyaCohorts.length){
         html+='<div class="subnote"><b>'+t("gp_gya_win")+'</b><ul style="margin:5px 0 0;padding-left:16px;">';
@@ -4013,10 +4368,245 @@ function calcGradPlan(){
         +'</div>';
     }
   }
+  html+='<div style="margin-top:14px;">'+bookingBtnHtml()+'</div>';
   html+='</div>';
   el.innerHTML=html;
+  gpApplyGlance(el);
 }
-function useCreditsInCalculator(credits,startWk,endWk,crossYear,endWkNext){
+/* ---------- "at a glance" summary ---------- */
+function gpFinishMonth(sy,wk){
+  const d=generateSchoolYear(sy);
+  const en=d.weeks[Math.min(wk,d.totalWeeks)-1][0].split("(")[0];
+  const tok=en.split(" - ")[1]?en.split(" - ")[1].trim().split(" ")[0]:en.trim().split(" ")[0];
+  const keys=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+  const mi=Math.max(0,keys.indexOf(tok.slice(0,3).toLowerCase()));
+  const EN=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const ES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  const yr=mi>=6?sy:sy+1;
+  return LANG==="es"?ES[mi]+" de "+yr:EN[mi]+" "+yr;
+}
+function gpGlancePeriods(periods){
+  const ps=periods.filter(p=>!p.isGyaSlot&&p.credits>0);
+  if(!ps.length)return "";
+  const paces=ps.map(p=>p.pace), mx=Math.max(...paces), mn=Math.min(...paces);
+  const pace=(mx-mn<0.15)?tf("gl_pace",{p:mx.toFixed(1)}):tf("gl_pace_upto",{p:mx.toFixed(1)});
+  const last=periods[periods.length-1];
+  return pace+" · "+tf("gl_finish",{d:gpFinishMonth(last.sy,46)});
+}
+function gpGlanceYears(years,kind){
+  const last=years[years.length-1];
+  const pace=kind==="catch"?tf("gl_strong",{p:years[1].pace.toFixed(1)}):tf("gl_pace",{p:"2"});
+  return pace+" · "+tf("gl_finish",{d:gpFinishMonth(last.sy,last.endWk)});
+}
+/* turn a long list of option sections into a short tappable summary */
+function gpApplyGlance(el){
+  const card=el.querySelector(".card"); if(!card)return;
+  const secs=[...card.querySelectorAll(":scope > .gp-section, :scope > .gya-card")];
+  if(secs.length<3)return;
+  card.querySelectorAll(":scope > .gp-or").forEach(o=>o.remove());
+  const box=document.createElement("div"); box.className="gl-box";
+  box.innerHTML='<h3>'+t("gl_title")+'</h3><p class="note" style="margin:0;">'+t("gl_hint")+'</p>';
+  secs.forEach((sec,i)=>{
+    const titleEl=sec.querySelector(".gp-sec-title")||sec.querySelector(".center b");
+    const muted=sec.hasAttribute("data-muted");
+    const row=document.createElement("button"); row.type="button"; row.className="gl-row"+(muted?" muted":"");
+    row.style.borderLeftColor=getComputedStyle(sec).borderTopColor;
+    /* name on its own line, "Class of YYYY" under it, so nothing wraps mid-phrase */
+    const parts=titleEl.textContent.split(" — ");
+    const gParts=(sec.getAttribute("data-glance")||"").split(" · ");
+    /* line 2 = the pace; line 3 = when it finishes + the class. Each line is
+       one complete phrase, so nothing is left hanging when a phone is narrow */
+    const line3=[...gParts.slice(1),...(parts[1]?[parts.slice(1).join(" — ")]:[])];
+    row.innerHTML='<span class="gl-main"><span class="gl-name">'+parts[0]+'</span>'
+      +'<div class="gl-line">'+gParts[0]+'</div>'
+      +(line3.length?'<div class="gl-class">'+line3.join(" · ")+'</div>':'')+'</span>'
+      +(muted?'':'<span class="gl-chev">›</span>');
+    sec.classList.add("gl-detail");
+    if(!muted)row.onclick=()=>{
+      const was=sec.classList.contains("open");
+      secs.forEach(x=>x.classList.remove("open"));
+      box.querySelectorAll(".gl-row").forEach(x=>x.classList.remove("open"));
+      if(!was){sec.classList.add("open");row.classList.add("open");row.after(sec);
+        setTimeout(()=>row.scrollIntoView({behavior:"smooth",block:"start"}),50);}
+    };
+    box.appendChild(row);
+  });
+  const anchor=card.querySelector(":scope > .riskband")||card.querySelector(":scope > .gp-bar");
+  anchor.after(box);
+  secs.forEach(sec=>box.appendChild(sec));   /* details live inside the list, under their row */
+  box.querySelectorAll(".gl-row").forEach((row,i)=>{ /* keep each detail right after its row */ });
+}
+/* FASTER-PACE option for students who are behind: 2 credits every working
+   week, with the standard breaks (Thanksgiving, Winter, Spring, Summer weeks
+   and a partial Week 1) left open. Walks the calendar week by week from the
+   current week until every credit is placed. */
+function gpFastPlan(credRemaining,currentSY,curWeek,syData){
+  /* "breaks when reasonable": keep as many breaks as possible WITHOUT
+     pushing the finish into an extra school year. Winter Break (school
+     closed) always stays; Summer, then Spring, then Thanksgiving weeks are
+     given up first if they would cost the student another year. */
+  const sets=[{tg:1,spring:1,summer:1},{tg:1,spring:1},{tg:1},{}];
+  const plans=sets.map(b=>gpFastPlanWith(credRemaining,currentSY,curWeek,syData,b));
+  const minYears=plans[plans.length-1].length;
+  return plans.find(pl=>pl.length===minYears);
+}
+function gpFastPlanWith(credRemaining,currentSY,curWeek,syData,b){
+  const years=[]; let rem=credRemaining, sy=currentSY, data=syData, startWk=curWeek;
+  for(let guard=0;guard<8&&rem>0;guard++){
+    const brk=new Set([26,27]);
+    if(b.tg)brk.add(22);
+    if(b.spring)brk.add(41);
+    if(b.summer)summerWeeks(data).forEach(w=>brk.add(w));
+    if(data.week1Partial)brk.add(1);
+    let cr=0,breaks=0,lastWk=startWk,firstWk=null;
+    for(let w=startWk;w<=data.totalWeeks&&rem>0;w++){
+      if(brk.has(w)){breaks++;continue;}
+      const give=Math.min(2,rem); cr+=give; rem-=give; lastWk=w; if(firstWk===null)firstWk=w;
+    }
+    years.push({sy,data,yearLabel:sy+"–"+(sy+1),credits:cr,breaks,
+      startWk:firstWk===null?startWk:firstWk,endWk:rem>0?data.totalWeeks:lastWk,done:rem<=0,isCur:sy===currentSY});
+    sy++; data=generateSchoolYear(sy); startWk=1;
+  }
+  return years;
+}
+/* CATCH-UP option: 2 credits every working week for the REST OF THIS school
+   year, then the remaining credits are spread evenly over the following
+   year(s), ending at Week 46 (graduation ceremony deadline) of the last one.
+   Uses the fewest following years that keep the pace at 2 cr/wk or less.
+   Returns null when everything already fits in the current year. */
+function gpCatchUpPlan(credRemaining,currentSY,curWeek,syData){
+  const sets=[{tg:1,spring:1,summer:1},{tg:1,spring:1},{tg:1},{}];
+  const cands=sets.map(b=>{
+    const y0=gpFastPlanWith(credRemaining,currentSY,curWeek,syData,b)[0];
+    if(y0.done)return null;
+    const R=credRemaining-y0.credits;
+    let later=[],cap=0;
+    for(let k=1;k<=6;k++){
+      later=[];cap=0;
+      for(let i=1;i<=k;i++){
+        const d=generateSchoolYear(currentSY+i), last=i===k;
+        const s1=d.week1Partial?2:1, e1=last?46:d.totalWeeks, wks=e1-s1+1;
+        later.push({sy:currentSY+i,data:d,yearLabel:(currentSY+i)+"–"+(currentSY+i+1),startWk:s1,endWk:e1,weeks:wks,
+          breaks:0,done:last,isCur:false,credits:0});
+        cap+=wks*2;
+      }
+      if(R<=cap)break;
+    }
+    const tot=later.reduce((a,y)=>a+y.weeks,0); let rem=R;
+    later.forEach((y,i)=>{ y.credits=i<later.length-1?Math.min(rem,Math.round(R*y.weeks/tot)):rem; rem-=y.credits; y.pace=y.credits/y.weeks; });
+    y0.done=false;
+    return [y0,...later];
+  });
+  const base=cands[cands.length-1];
+  if(!base)return null;
+  return cands.find(c=>c&&c.length===base.length)||base;
+}
+/* is the fast plan's finish earlier than (endSY, endWk)? */
+function gpFastIsSooner(years,endSY,endWk){
+  const last=years[years.length-1];
+  return last.sy<endSY||(last.sy===endSY&&last.endWk<endWk);
+}
+function gpRenderFast(years,credEarned,baseHsYr,rel,skippedWeek,kind,optNum,cmp){
+  const last=years[years.length-1];
+  const catchUp=kind==="catch";
+  /* numbered like "Option 3:" on the regular map so the list reads as one set of choices */
+  const ttl=tf(catchUp?"gp_catch_title":"gp_fast_title",{y:last.sy+1});
+  const numbered=optNum?tf("gp_option_n",{n:optNum})+ttl:ttl;
+  let html='<div class="gp-section '+(catchUp?"gp-sec-catch":"gp-sec-fast")+'" data-glance="'+gpGlanceYears(years,kind)+'"><div class="gp-sec-title">'+numbered+'</div>'
+    +'<p class="note center" style="margin:8px 4px 2px;">'+t(catchUp?"gp_catch_sub":"gp_fast_sub")+'</p>';
+  /* plain-words comparison with the even-paced plan that ends the same school year */
+  if(catchUp&&cmp&&cmp.d>0){
+    html+='<div class="subnote" style="margin:8px 0 2px;line-height:1.5;">'
+      +(years.length===2&&cmp.b!==null?tf("gp_cmp_two",{o:cmp.o,d:cmp.d,a:years[1].pace.toFixed(1),b:cmp.b.toFixed(1)}):tf("gp_cmp_multi",{o:cmp.o,d:cmp.d}))
+      +'</div>';
+  }
+  let cum=credEarned;
+  years.forEach((y,i)=>{
+    cum+=y.credits;
+    const n=baseHsYr+i;
+    let name=(rel&&i===0?t("rt_curyear"):t("gp_year")+" "+n)+" ";
+    name+=y.isCur?t("gp_remainder"):(y.done?t("gp_gradyear"):t("gp_fullyear"));
+    if(y.isCur&&y.done)name=(rel?t("rt_curyear"):t("gp_year")+" "+n)+" "+t("gp_gradyear");
+    const[endCore]=splitLabel(LANG==="es"?y.data.weeks[y.endWk-1][1]:y.data.weeks[y.endWk-1][0]);
+    html+='<div class="gp-row'+(y.isCur?" cur":"")+(y.done?" grad":"")+'"><div class="gp-top"><div>'
+      +'<div class="gp-name">'+name+'</div>'
+      +'<div class="gp-sub">'+y.yearLabel+' · '+(y.isCur&&skippedWeek?t("gp_plan_next_wk")+" ":"")+t("gp_weeks")+' '+y.startWk+'–'+y.endWk+'</div></div>'
+      +'<div class="gp-cred"><b>'+y.credits+' '+t("credits")+'</b>'
+      +'<div class="gp-run">'+t("gp_running")+' '+cum+' / 230</div></div></div>'
+      +'<div class="gp-meta">'
+      +(y.pace!==undefined
+        ?'<span class="'+(y.pace<=2.0?"p-green":"p-yellow")+'">'+(y.pace<=2.0?"✅":"⚠️")+' '+y.pace.toFixed(1)+' '+t("cr_wk")+'</span>'
+        :'<span class="p-green">✅ '+t("gp_fast_meta")+'</span>')
+      +(y.breaks>0?'<span style="color:var(--muted);">'+tf("gp_fast_breaks",{n:y.breaks})+'</span>':'')+'</div>'
+      +(y.done?'<div class="subnote" style="margin-top:7px;font-weight:700;">'+tf("gp_fast_done",{w:y.endWk,d:endCore})+'</div>'
+        /* graduation-ceremony deadline message, on every option's finishing year */
+        +(y.endWk<=46?'<div class="subnote" style="margin-top:6px;color:#14532d;font-weight:700;">'+t("gp_in_time")+'</div>'
+                     :'<div class="subnote" style="margin-top:6px;line-height:1.5;">'+t("gp_after46")+'</div>'):'')
+      +'</div>';
+    /* catch-up: the current (2 cr/wk) year can go to the planner on its own */
+    if(catchUp&&i===0&&y.credits>0){
+      html+='<button class="gp-usebtn" style="margin-bottom:4px;" onclick="useCreditsInCalculator('+y.credits+','+y.startWk+','+y.data.totalWeeks+',false,0,true)">'
+        +(rel?tf("rt_use_cur",{n:y.credits}):tf("gp_use",{n:y.credits,y:baseHsYr}))+'</button>';
+    }
+  });
+  /* hand-off to the week-by-week planner */
+  const y0=years[0], y1=years[1];
+  if(years.length===1){
+    html+='<button class="gp-usebtn" onclick="useCreditsInCalculator('+y0.credits+','+y0.startWk+','+y0.endWk+',false,0)">'
+      +(rel?tf("rt_use_cur",{n:y0.credits}):tf("gp_use",{n:y0.credits,y:baseHsYr}))+'</button>';
+  } else {
+    const two=y0.credits+y1.credits;
+    html+='<button class="gp-usebtn" style="margin-top:8px;" onclick="useCreditsInCalculator('+two+','+y0.startWk+','+y0.data.totalWeeks+',true,'+y1.endWk+')">'
+      +(rel?tf("rt_use_two",{n:two}):tf("gp_use2",{n:two,a:baseHsYr,b:baseHsYr+1}))+'</button>';
+  }
+  return html+'</div>';
+}
+/* Students past their 4th year (e.g. adults returning to finish): years are
+   counted from NOW (Current Year, Year 2, Year 3, Year 4), not from 9th grade.
+   Uses the fewest years that keep a sustainable pace (≤ 2 cr/wk). */
+function renderReturningPlan(el,credEarned,credRemaining){
+  const{week:curWeek,syData,currentSY,skippedWeek}=gpGetCurrentWeek();
+  let periods,n;
+  for(n=1;n<=4;n++){
+    periods=gpBuildPeriods(currentSY,currentSY+n-1,currentSY,curWeek,syData,skippedWeek);
+    gpEvenLoad(periods,credEarned,credRemaining);
+    if(Math.max(...periods.map(p=>p.pace))<=2.0)break;
+  }
+  if(n>4)n=4;
+  const fast=Math.max(...periods.map(p=>p.pace))>2.0;
+  const curP=periods[0], nxtP=periods[1];
+  const cfg={startWk:curWeek,
+    curEndWk:curP.isGrad?46:syData.totalWeeks,
+    nextEndWk:nxtP?(nxtP.isGrad?46:generateSchoolYear(nxtP.sy).totalWeeks):46};
+  const combined=nxtP?curP.credits+nxtP.credits:0;
+  let html='<div class="card">';
+  const classOf=currentSY+n;   /* final school year ends in spring of currentSY+n */
+  html+='<div class="gp-bar"><span><b>'+t("gp_earned")+'</b> '+credEarned+' / 230</span></div>';
+  html+='<div class="subnote" style="margin-top:10px;line-height:1.5;">'+t("gp_count_note")+'</div>';
+  html+='<!--gp-paths-->';
+  html+='<div class="gp-section gp-sec-trad" data-glance="'+gpGlancePeriods(periods)+'"><div class="gp-sec-title">'+tf("rt_plan",{y:classOf})+'</div>'
+    +gpRenderRows(periods,true,combined,cfg,{rel:true});
+  if(fast)html+='<div class="notice" style="margin-top:10px;line-height:1.5;">'+t("rt_fast")+'</div>';
+  html+='</div>';
+  if(n>=2){
+    let countR=1;
+    const cuR=gpCatchUpPlan(credRemaining,currentSY,curWeek,syData);
+    if(cuR&&cuR.length<=n&&cuR[0].credits>=curP.credits+5){
+      html+='<div class="gp-or">'+t("gp_or")+'</div>'+gpRenderFast(cuR,credEarned,1,true,skippedWeek,"catch",0,
+        cuR.length===n?{o:t("gp_cmp_main"),d:cuR[0].credits-curP.credits,b:nxtP?nxtP.pace:null}:null); countR++; }
+    const fastR=gpFastPlan(credRemaining,currentSY,curWeek,syData);
+    if(gpFastIsSooner(fastR,currentSY+n-1,46)){
+      html+='<div class="gp-or">'+t("gp_or")+'</div>'+gpRenderFast(fastR,credEarned,1,true,skippedWeek,"fast"); countR++; }
+    if(countR>=2)html=html.replace('<!--gp-paths-->','<div class="riskband risk-good" style="margin-top:12px;">'+tf("gp_paths",{n:countR})+'</div>');
+  }
+  html+='<div style="margin-top:14px;">'+bookingBtnHtml()+'</div>';
+  html+='</div>';
+  el.innerHTML=html;
+  gpApplyGlance(el);
+}
+function useCreditsInCalculator(credits,startWk,endWk,crossYear,endWkNext,continues){
+  leaveHiset();
+  S.planContinues=!!continues;   /* this year's share of a multi-year plan */
   S.yearMode="current";
   rebuildYearData();
   S.credits=credits;
@@ -4068,13 +4658,24 @@ function confetti(n){
 /* =====================================================================
    SELECT POPULATION + INPUT SYNC + INIT
    ===================================================================== */
+/* dropdown text for one week, with the calendar year worked out from that
+   school year's own dates — e.g. "Week 28: Jan 3 - Jan 7, 2028". Nothing to
+   update by hand when a new school year starts. */
+function weekOptLabel(sy,w){
+  let[core,note]=splitLabel(weekLabel(sy,w));
+  note=withSummer(note,sy,w);
+  const iso=(sy.isoStarts[w]||"").split("-").map(Number);
+  let yr="";
+  if(iso.length===3){ const end=new Date(iso[0],iso[1]-1,iso[2]); end.setDate(end.getDate()+4); yr=(LANG==="es"?" de ":", ")+end.getFullYear(); }
+  return t("week")+" "+w+": "+core+yr+(note?" ("+note+")":"");
+}
 function populateAllSelects(){
   const sw=document.getElementById("startWeekSel"), ew=document.getElementById("endWeekSel"), en=document.getElementById("endWeekNextSel");
   [ [sw,SY,S.startWeek], [ew,SY,S.endWeek], [en,NY,S.endWeekNext] ].forEach(([sel,sy,val])=>{
     sel.innerHTML="";
     for(let w=1;w<=sy.totalWeeks;w++){
       const o=document.createElement("option");
-      o.value=w; o.textContent=t("week")+" "+w+": "+weekLabel(sy,w);
+      o.value=w; o.textContent=weekOptLabel(sy,w);
       sel.appendChild(o);
     }
     sel.value=String(val);
@@ -4088,6 +4689,7 @@ function syncWizardInputs(){
   updateNextState();
 }
 document.addEventListener("DOMContentLoaded",()=>{
+  loadSheetButtons();
   S=defaultState();
   rebuildYearData();
   S.startWeek=defaultStartWeek();
@@ -4140,7 +4742,7 @@ const ASSESS_KEY="wcc_assessment_v1";
    Form → paste your form's PRE-FILLED link (see instructions there);
    then copy the printed config into these lines to bake it in.
    --------------------------------------------------------------- */
-const GFORM_BAKED={"formId":"1FAIpQLScPs2sJniiedGZWZINMENXwjXlCkoLW6weC4EbSDAxUnnqR2Q","fields":{"sid":"entry.1651829273","phase":"entry.510706584","grade":"entry.1773917561","lang":"entry.1426559880","q1":"entry.1429236220","q2":"entry.1529227603","q3":"entry.1237065122","q4":"entry.1359372442","q5":"entry.444283361","helpful":"entry.265268604"}};
+/* GFORM_BAKED (the survey's Google Form connection) now lives in the SETTINGS block at the very top of this file. */
 const GFORM_LS_KEY="wcc_gform_cfg";
 function gformConfig(){
   try{ const o=JSON.parse(localStorage.getItem(GFORM_LS_KEY)); if(o&&o.formId)return o; }catch(e){}
@@ -4246,6 +4848,7 @@ function pvBack(){
   showScreen(back);
 }
 function doPrint(){
+  if(curScreen==="scr-tracker"&&trBlocked()){toast(t("tr_blocked_toast"));return;}
   if(requirePost(doPrint))return;
   window.print();
 }
